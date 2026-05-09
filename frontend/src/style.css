@@ -1,0 +1,88 @@
+:root {
+  /* Light Mode (Default) */
+  --primary: #76B900;
+  --bg-color: #F8F9FA;
+  --surface-color: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #4A4A4A;
+  --transition-speed: 0.4s;
+}
+
+[data-theme='dark'] {
+  --bg-color: #000000;
+  --surface-color: #1A1A1A;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B3B3B3;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Base Utility Classes */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.card {
+  background-color: var(--surface-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] .card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid #333;
+}
+
+/* Dynamic Background Animation */
+.bg-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, rgba(118, 185, 0, 0.05) 0%, transparent 50%);
+  animation: pulse 10s infinite alternate;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(1.5); opacity: 0.6; }
+}
