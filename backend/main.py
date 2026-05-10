@@ -58,15 +58,31 @@ async def analyze_image(file: UploadFile = File(...)):
 @app.post("/stream-frame")
 async def stream_frame(file: UploadFile = File(...)):
     """
-    Xử lý frame từ Webcam thời gian thực.
+    Xử lý frame từ Webcam thời gian thực, hỗ trợ nhiều khuôn mặt.
     """
-    # Tương tự như analyze-image nhưng tối ưu cho tốc độ
     contents = await file.read()
-    # Logic xử lý nhanh ở đây...
+    # Trong thực tế: convert bytes sang opencv mat, chạy model detection & recognition
+    
+    # Mock đa khuôn mặt để demo frontend
+    num_faces = random.randint(1, 2)
+    faces = []
+    
+    for i in range(num_faces):
+        faces.append({
+            "face_id": i,
+            "emotion": random.choice(EMOTIONS),
+            "confidence": round(random.uniform(0.75, 0.98), 2),
+            "bounding_box": {
+                "top": random.randint(20, 40) + (i * 10),
+                "left": random.randint(20, 40) + (i * 30),
+                "width": 30, # % của frame
+                "height": 40 # % của frame
+            }
+        })
     
     return {
-        "emotion": random.choice(EMOTIONS),
-        "confidence": round(random.uniform(0.8, 0.95), 2)
+        "status": "success",
+        "faces": faces
     }
 
 if __name__ == "__main__":

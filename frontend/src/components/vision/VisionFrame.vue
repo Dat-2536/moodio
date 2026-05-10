@@ -15,8 +15,9 @@ defineProps({
 
 <style scoped>
 .vision-main {
-  min-height: 600px;
-  padding: 1.5rem;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
 }
@@ -36,7 +37,7 @@ defineProps({
 :deep(.webcam-video), :deep(.main-video), :deep(.analyzed-img) {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   border-radius: 12px;
 }
 
@@ -57,7 +58,4 @@ defineProps({
   100% { top: 100%; }
 }
 
-@media (max-width: 768px) {
-  .vision-main { min-height: 400px; }
-}
 </style>

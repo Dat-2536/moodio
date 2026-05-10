@@ -3,7 +3,7 @@ import { ref, onUnmounted } from 'vue'
 export function useWebcamAnalysis() {
   const webcamStream = ref(null)
   const isWebcamActive = ref(false)
-  const currentEmotion = ref(null)
+  const detectedFaces = ref([])
   const webcamInterval = ref(null)
 
   const startWebcam = async (videoRef, canvasRef) => {
@@ -37,7 +37,9 @@ export function useWebcamAnalysis() {
               body: formData 
             })
             const data = await res.json()
-            currentEmotion.value = data
+            if (data.status === 'success') {
+              detectedFaces.value = data.faces
+            }
           } catch (err) { 
             console.error('Webcam frame analysis error:', err) 
           }
@@ -59,7 +61,7 @@ export function useWebcamAnalysis() {
       clearInterval(webcamInterval.value)
       webcamInterval.value = null
     }
-    currentEmotion.value = null
+    detectedFaces.value = []
   }
 
   onUnmounted(() => {
@@ -68,7 +70,7 @@ export function useWebcamAnalysis() {
 
   return {
     isWebcamActive,
-    currentEmotion,
+    detectedFaces,
     startWebcam,
     stopWebcam
   }
