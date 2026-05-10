@@ -5,7 +5,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 
-const API_BASE = 'http://localhost:8000'
+import { API_BASE } from '@/api/config'
 
 const selectedRange = ref('week')
 const isLoading = ref(true)

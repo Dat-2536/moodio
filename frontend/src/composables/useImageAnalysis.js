@@ -1,5 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { normalizeFaceResults } from '@/utils/faceUtils'
+import { API_BASE } from '@/api/config'
 
 export function useImageAnalysis() {
   const analysisResults = ref([])
@@ -30,7 +31,7 @@ export function useImageAnalysis() {
     formData.append('file', file)
     
     try {
-      const res = await fetch('http://localhost:8000/analyze-image', { 
+      const res = await fetch(`${API_BASE}/analyze-image`, { 
         method: 'POST', 
         body: formData 
       })

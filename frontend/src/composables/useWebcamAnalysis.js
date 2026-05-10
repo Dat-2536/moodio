@@ -1,5 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { normalizeFaceResults } from '@/utils/faceUtils'
+import { API_BASE } from '@/api/config'
 
 export const WEBCAM_INFERENCE_INTERVAL_MS = 500
 
@@ -52,7 +53,7 @@ export function useWebcamAnalysis() {
           const formData = new FormData()
           formData.append('file', blob, 'webcam.jpg')
           
-          const res = await fetch('http://localhost:8000/stream-frame', { 
+          const res = await fetch(`${API_BASE}/stream-frame`, { 
             method: 'POST', 
             body: formData 
           })
