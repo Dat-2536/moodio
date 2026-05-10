@@ -7,15 +7,15 @@ import AOS from 'aos'
 const router = useRouter()
 
 const features = [
-  { icon: Cpu, title: 'ResNet50 Model', desc: 'Kiến trúc Deep Learning 50 lớp, tối ưu cho nhận diện biểu cảm khuôn mặt với skip connections.' },
-  { icon: Zap, title: 'Real-time Processing', desc: 'Độ trễ cực thấp (<0.5s) với pipeline tối ưu, đảm bảo trải nghiệm phân tích tức thì.' },
+  { icon: Cpu, title: 'ResNet18 Model', desc: 'Kiến trúc Deep Learning 18 lớp, tối ưu cho nhận diện biểu cảm khuôn mặt với residual connections.' },
+  { icon: Zap, title: 'Real-time Processing', desc: 'Độ trễ cực thấp (<0.1s) với pipeline tối ưu, đảm bảo trải nghiệm phân tích tức thì.' },
   { icon: ShieldCheck, title: 'Privacy First', desc: 'Xử lý hoàn toàn on-device, không lưu trữ hay truyền tải hình ảnh cá nhân ra ngoài.' }
 ]
 
 const steps = [
-  { num: '01', icon: Camera, title: 'Thu thập đầu vào', desc: 'Hệ thống nhận hình ảnh từ Webcam, ảnh upload hoặc video. Dữ liệu được chuẩn hóa về tensor (224×224 RGB).', color: '#76b900' },
-  { num: '02', icon: Brain, title: 'Phát hiện khuôn mặt', desc: 'Thuật toán MTCNN định vị và trích xuất vùng khuôn mặt, loại bỏ nhiễu nền để tập trung vào đặc trưng quan trọng.', color: '#00b4d8' },
-  { num: '03', icon: Layers, title: 'Trích xuất đặc trưng', desc: 'ResNet50 backbone với 50 lớp Convolution xử lý hình ảnh, học các pattern phức tạp từ cơ bản đến trừu tượng.', color: '#7209b7' },
+  { num: '01', icon: Camera, title: 'Thu thập đầu vào', desc: 'Hệ thống nhận hình ảnh từ Webcam, ảnh upload hoặc video. Dữ liệu được chuẩn hóa về tensor (224×224 Grayscale).', color: '#76b900' },
+  { num: '02', icon: Brain, title: 'Xử lý vùng mặt', desc: 'Hệ thống xác định và trích xuất vùng khuôn mặt (minh hoạ), loại bỏ nhiễu nền để tập trung vào đặc trưng quan trọng.', color: '#00b4d8' },
+  { num: '03', icon: Layers, title: 'Trích xuất đặc trưng', desc: 'ResNet18 backbone với 18 lớp Convolution xử lý hình ảnh, học các pattern phức tạp từ cơ bản đến trừu tượng.', color: '#7209b7' },
   { num: '04', icon: BarChart3, title: 'Phân loại cảm xúc', desc: 'Lớp Softmax cuối cùng xuất ra phân phối xác suất trên 7 nhãn cảm xúc. Kết quả được hiển thị trực quan tức thì.', color: '#f72585' }
 ]
 
@@ -23,15 +23,15 @@ const emotions = [
   { label: 'Happy', emoji: '😊', color: '#f6d365', desc: 'Vui vẻ, hạnh phúc' },
   { label: 'Sad', emoji: '😢', color: '#a1c4fd', desc: 'Buồn bã, thất vọng' },
   { label: 'Angry', emoji: '😠', color: '#ff9a9e', desc: 'Tức giận, bực bội' },
-  { label: 'Surprised', emoji: '😲', color: '#84fab0', desc: 'Ngạc nhiên, bất ngờ' },
+  { label: 'Surprise', emoji: '😲', color: '#84fab0', desc: 'Ngạc nhiên, bất ngờ' },
   { label: 'Neutral', emoji: '😐', color: '#d4d4d4', desc: 'Bình thường, trung lập' },
-  { label: 'Disgusted', emoji: '🤢', color: '#b7e4c7', desc: 'Ghê tởm, phản cảm' },
-  { label: 'Fearful', emoji: '😨', color: '#fbc2eb', desc: 'Sợ hãi, lo lắng' }
+  { label: 'Disgust', emoji: '🤢', color: '#b7e4c7', desc: 'Ghê tởm, phản cảm' },
+  { label: 'Fear', emoji: '😨', color: '#fbc2eb', desc: 'Sợ hãi, lo lắng' }
 ]
 
 const techStack = [
-  { icon: Brain, name: 'ResNet50', detail: 'Deep Learning backbone với 50 lớp tích chập. Pre-trained trên ImageNet, fine-tuned cho FER.' },
-  { icon: Cpu, name: 'FastAPI + Python', detail: 'Backend hiệu năng cao với async processing. OpenCV cho computer vision pipeline.' },
+  { icon: Brain, name: 'ResNet18', detail: 'Deep Learning backbone với 18 lớp tích chập. Pre-trained trên ImageNet, fine-tuned cho FER.' },
+  { icon: Cpu, name: 'FastAPI + Python', detail: 'Backend hiệu năng cao với async processing. Pipeline AI tối ưu cho tốc độ inference.' },
   { icon: Layers, name: 'Vue 3 + Vite', detail: 'Frontend reactive với Composition API. Vite đảm bảo build time cực nhanh.' },
   { icon: Database, name: 'FER2013 Dataset', detail: '35,887 ảnh khuôn mặt 48×48 pixel. 7 nhãn cảm xúc cơ bản theo chuẩn Ekman.' }
 ]
@@ -53,12 +53,34 @@ onMounted(() => {
         <span class="logo-text">MOODIO<span class="highlight">AI</span></span>
       </h1>
       <p class="hero-desc" data-aos="fade-up" data-aos-delay="200">
-        Ứng dụng AI dựa trên ResNet50, cung cấp khả năng phân tích biểu cảm
+        Ứng dụng AI dựa trên ResNet18, cung cấp khả năng phân tích biểu cảm
         khuôn mặt với độ chính xác vượt trội trong thời gian thực.
       </p>
       <div class="hero-actions" data-aos="fade-up" data-aos-delay="300">
         <button class="btn btn-primary btn-glow" @click="router.push('/webcam')">Trải nghiệm ngay</button>
         <button class="btn btn-outline" @click="router.push('/visualize')">Xem AI hoạt động</button>
+      </div>
+
+      <div class="hero-stats" data-aos="fade-up" data-aos-delay="400">
+        <div class="stat-item">
+          <div class="stat-num">18</div>
+          <div class="stat-label">Model Layers</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num">&lt;0.1s</div>
+          <div class="stat-label">Inference Time</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num">11M+</div>
+          <div class="stat-label">Parameters</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num">7</div>
+          <div class="stat-label">Emotion Classes</div>
+        </div>
       </div>
 
       <div class="features-grid">
@@ -122,14 +144,14 @@ onMounted(() => {
       <div class="arch-two-col">
         <div class="arch-text" data-aos="fade-right">
           <div class="section-kicker">Deep Learning</div>
-          <h2>Kiến Trúc ResNet50</h2>
+          <h2>Kiến Trúc ResNet18</h2>
           <p>
-            ResNet50 giải quyết thành công bài toán <strong>Vanishing Gradient</strong> nhờ
+            ResNet18 giải quyết bài toán <strong>Vanishing Gradient</strong> nhờ
             <em>Residual Connections</em> - các "đường tắt" cho phép gradient lan truyền ngược
-            hiệu quả qua 50 lớp mạng.
+            hiệu quả qua 18 lớp mạng.
           </p>
           <p style="margin-top: 1rem;">
-            Với hơn <strong>25 triệu tham số</strong>, mô hình được pre-train trên ImageNet
+            Với khoảng <strong>11 triệu tham số</strong>, mô hình được pre-train trên ImageNet
             (1.2M ảnh) rồi fine-tune trên FER2013 để đạt độ chính xác tối ưu cho bài toán
             nhận diện cảm xúc.
           </p>
@@ -150,22 +172,22 @@ onMounted(() => {
           <div class="arch-flow">
             <div class="arch-box input-box">
               <div class="abox-label">Input</div>
-              <div class="abox-detail">224×224×3</div>
+              <div class="abox-detail">224×224 Grayscale</div>
             </div>
             <div class="flow-arrow">▼</div>
             <div class="arch-box conv-box">
               <div class="abox-label">Conv Block</div>
-              <div class="abox-detail">7×7 Conv, BN, ReLU</div>
+              <div class="abox-detail">Basic Blocks (18 layers)</div>
             </div>
             <div class="flow-arrow">▼</div>
             <div class="arch-box res-box">
               <div class="abox-label">Residual Blocks</div>
-              <div class="abox-detail">16× Bottleneck Layers</div>
+              <div class="abox-detail">Skip Connections</div>
             </div>
             <div class="flow-arrow">▼</div>
             <div class="arch-box pool-box">
               <div class="abox-label">Global Avg Pool</div>
-              <div class="abox-detail">2048-dim vector</div>
+              <div class="abox-detail">512-dim vector</div>
             </div>
             <div class="flow-arrow">▼</div>
             <div class="arch-box out-box">

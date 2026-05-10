@@ -1,4 +1,9 @@
 import { ref, computed, onUnmounted } from 'vue'
+import { 
+  EMOTION_CLASSES, 
+  EMOTION_DISPLAY_NAMES, 
+  EMOTION_COLORS 
+} from '@/constants/emotions'
 
 export function useRecognitionSimulation() {
   const steps = [
@@ -53,10 +58,10 @@ export function useRecognitionSimulation() {
         technical_note: "Deep Learning không xử lý ảnh như con người nhìn thấy, mà xử lý các tensor số."
       },
       technical_explanation: {
-        what_happens: "Face crop được resize, normalize và chuyển thành tensor đầu vào.",
+        what_happens: "Face crop được resize, chuyển sang Grayscale và chuẩn hóa thành tensor đầu vào.",
         why_it_matters: "Mô hình yêu cầu input shape và phân phối dữ liệu ổn định giống lúc huấn luyện.",
-        data_change: "Face crop → 224 × 224 × 3 tensor.",
-        technical_note: "Pixel values có thể được scale về [0, 1] hoặc chuẩn hóa bằng mean/std."
+        data_change: "Face crop → 224 × 224 Grayscale tensor (3-ch).",
+        technical_note: "Pixel values được chuẩn hóa bằng ImageNet mean/std sau khi chuyển sang grayscale."
       }
     },
     {
@@ -103,27 +108,27 @@ export function useRecognitionSimulation() {
     {
       id: 'happy',
       label: 'Happy',
-      scores: { Happy: 82, Neutral: 8, Surprise: 5, Sad: 2, Angry: 2, Fear: 1 }
+      scores: { happy: 82, neutral: 8, surprise: 5, sad: 2, angry: 2, fear: 1, disgust: 0 }
     },
     {
       id: 'neutral',
       label: 'Neutral',
-      scores: { Neutral: 76, Sad: 8, Happy: 7, Angry: 4, Surprise: 3, Fear: 2 }
+      scores: { neutral: 76, sad: 8, happy: 7, angry: 4, surprise: 3, fear: 2, disgust: 0 }
     },
     {
       id: 'angry',
       label: 'Angry',
-      scores: { Angry: 71, Neutral: 12, Sad: 7, Fear: 5, Surprise: 3, Happy: 2 }
+      scores: { angry: 71, neutral: 12, sad: 7, fear: 5, surprise: 3, happy: 2, disgust: 0 }
     },
     {
       id: 'sad',
       label: 'Sad',
-      scores: { Sad: 74, Neutral: 11, Fear: 6, Angry: 4, Surprise: 3, Happy: 2 }
+      scores: { sad: 74, neutral: 11, fear: 6, angry: 4, surprise: 3, happy: 2, disgust: 0 }
     },
     {
       id: 'surprise',
       label: 'Surprise',
-      scores: { Surprise: 78, Fear: 8, Happy: 6, Neutral: 5, Sad: 2, Angry: 1 }
+      scores: { surprise: 78, fear: 8, happy: 6, neutral: 5, sad: 2, angry: 1, disgust: 0 }
     }
   ]
 
@@ -180,13 +185,15 @@ export function useRecognitionSimulation() {
       const data = await res.json()
       if (data && data.faces && data.faces.length > 0) {
         const primaryEmotion = data.faces[0].emotion
-        const confidence = Math.round(data.faces[0].confidence * 100)
+        const confidence = data.faces[0].confidence // Already in 0-100 from backend
         
-        const newScores = { Happy: 2, Neutral: 2, Surprise: 2, Sad: 2, Angry: 2, Fear: 2 }
-        newScores[primaryEmotion] = confidence
+        const newScores = {}
+        EMOTION_CLASSES.forEach(cls => { newScores[cls] = 2 })
+        
+        newScores[primaryEmotion] = Math.round(confidence)
         const remaining = 100 - confidence
-        const others = Object.keys(newScores).filter(k => k !== primaryEmotion)
-        others.forEach(k => { newScores[k] = Math.floor(remaining / others.length) })
+        const others = EMOTION_CLASSES.filter(k => k !== primaryEmotion)
+        others.forEach(k => { newScores[k] = Math.max(0, Math.floor(remaining / others.length)) })
         
         customScores.value = newScores
       }

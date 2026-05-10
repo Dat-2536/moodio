@@ -20,9 +20,9 @@ const beginnerExplanations = {
     fact: 'Thuật toán hiện đại có thể nhận diện hàng trăm khuôn mặt trong một mili giây.'
   },
   'preprocessing': {
-    what: 'Khuôn mặt được cắt ra, xoay thẳng và đưa về kích thước chuẩn (ví dụ 48x48).',
+    what: 'Khuôn mặt được cắt ra, xoay thẳng và đưa về kích thước chuẩn (224x224).',
     why: 'Giúp mô hình nhận diện ổn định hơn, không bị ảnh hưởng bởi ánh sáng hay góc độ.',
-    change: 'Ảnh màu được chuyển sang grayscale (trắng đen) và chuẩn hóa dữ liệu.',
+    change: 'Ảnh được chuyển sang grayscale (3-ch) và chuẩn hóa dữ liệu.',
     fact: 'Chuẩn hóa giúp quá trình tính toán của AI nhanh và chính xác hơn gấp nhiều lần.'
   },
   'deep-learning': {
@@ -47,16 +47,16 @@ const technicalExplanations = {
     fact: 'Batch processing cho phép xử lý nhiều frame cùng lúc để tăng throughput.'
   },
   'face-detection': {
-    what: 'Sử dụng các mô hình như MTCNN hoặc SSD để localize bounding box.',
+    what: 'Hệ thống định vị vùng khuôn mặt trong ảnh (Đang sử dụng minh họa).',
     why: 'Region of Interest (ROI) extraction giảm computational cost cho giai đoạn sau.',
-    change: 'Output là tọa độ [xmin, ymin, xmax, ymax] và confidence score.',
-    fact: 'IoU (Intersection over Union) được dùng để đánh giá độ chính xác vùng phát hiện.'
+    change: 'Output là tọa độ [top, left, width, height] và confidence score.',
+    fact: 'Việc tách biệt khuôn mặt giúp AI không bị nhầm lẫn bởi các vật thể ở phông nền.'
   },
   'preprocessing': {
-    what: 'Thực hiện Histogram Equalization và Image Resizing.',
+    what: 'Thực hiện Grayscale conversion và Image Resizing (224x224).',
     why: 'Loại bỏ variance về illumination và spatial scale.',
-    change: 'Dữ liệu được reshape về định dạng (1, 48, 48, 1) tùy theo kiến trúc model.',
-    fact: 'Data augmentation đôi khi được áp dụng realtime để tăng độ robust.'
+    change: 'Dữ liệu được reshape về định dạng Tensor (1, 3, 224, 224).',
+    fact: 'Mô hình ResNet18 yêu cầu input 3 kênh màu, nên ảnh xám được nhân bản lên 3 kênh.'
   },
   'deep-learning': {
     what: 'Thực hiện Convolution, Max Pooling và Batch Normalization.',

@@ -1,26 +1,25 @@
 <script setup>
+import { EMOTION_CLASSES, EMOTION_DISPLAY_NAMES, EMOTION_COLORS } from '@/constants/emotions'
+
 const props = defineProps({
   scores: Object,
   animatedScores: Object,
   isActive: Boolean
 })
 
-const emotions = [
-  { id: 'Happy', color: '#f6d365' },
-  { id: 'Neutral', color: '#a1c4fd' },
-  { id: 'Surprise', color: '#84fab0' },
-  { id: 'Sad', color: '#cfd9df' },
-  { id: 'Angry', color: '#ff9a9e' },
-  { id: 'Fear', color: '#fbc2eb' }
-]
+const emotions = EMOTION_CLASSES.map(cls => ({
+  id: cls,
+  name: EMOTION_DISPLAY_NAMES[cls],
+  color: EMOTION_COLORS[cls]
+}))
 
-const getScore = (emotion) => {
-  return props.animatedScores[emotion] || 0
+const getScore = (emotionId) => {
+  return props.animatedScores[emotionId] || 0
 }
 
-const isHighest = (emotion) => {
+const isHighest = (emotionId) => {
   const max = Math.max(...Object.values(props.scores))
-  return props.scores[emotion] === max
+  return props.scores[emotionId] === max
 }
 </script>
 
@@ -39,7 +38,7 @@ const isHighest = (emotion) => {
         :class="{ highest: isHighest(emo.id) && isActive }"
       >
         <div class="bar-info">
-          <span class="emo-name">{{ emo.id }}</span>
+          <span class="emo-name">{{ emo.name }}</span>
           <span class="emo-val">{{ getScore(emo.id) }}%</span>
         </div>
         <div class="bar-bg">
@@ -57,7 +56,7 @@ const isHighest = (emotion) => {
     <div v-if="isActive" class="prediction-summary mt-6">
       <div class="summary-label">Final Decision</div>
       <div class="summary-result">
-        <span class="result-emotion">{{ emotions.find(e => isHighest(e.id))?.id }}</span>
+        <span class="result-emotion">{{ EMOTION_DISPLAY_NAMES[EMOTION_CLASSES.find(cls => isHighest(cls))] }}</span>
         <span class="result-confidence">{{ Math.max(...Object.values(scores)) }}% Confidence</span>
       </div>
     </div>
