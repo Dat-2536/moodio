@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
-  Home, Camera, Upload, Film, BarChart3, Sun, Moon, Github, Menu, X 
+  Home, Camera, Upload, BrainCircuit, BarChart3, Sun, Moon, Github, Menu, X 
 } from 'lucide-vue-next'
 import { useTheme } from '@/composables/useTheme'
 
@@ -43,8 +43,8 @@ onUnmounted(() => {
         <RouterLink to="/image" class="nav-item" active-class="active">
           <Upload :size="18" /> Image
         </RouterLink>
-        <RouterLink to="/video" class="nav-item" active-class="active">
-          <Film :size="18" /> Video
+        <RouterLink to="/visualize" class="nav-item" active-class="active">
+          <BrainCircuit :size="18" /> Visualize
         </RouterLink>
         <RouterLink to="/stats" class="nav-item" active-class="active">
           <BarChart3 :size="18" /> Stats
@@ -73,7 +73,7 @@ onUnmounted(() => {
         <RouterLink to="/home" class="mobile-nav-item" @click="isMenuOpen = false"><Home :size="18"/> Home</RouterLink>
         <RouterLink to="/webcam" class="mobile-nav-item" @click="isMenuOpen = false"><Camera :size="18"/> Webcam</RouterLink>
         <RouterLink to="/image" class="mobile-nav-item" @click="isMenuOpen = false"><Upload :size="18"/> Image</RouterLink>
-        <RouterLink to="/video" class="mobile-nav-item" @click="isMenuOpen = false"><Film :size="18"/> Video</RouterLink>
+        <RouterLink to="/visualize" class="mobile-nav-item" @click="isMenuOpen = false"><BrainCircuit :size="18"/> Visualize</RouterLink>
         <RouterLink to="/stats" class="mobile-nav-item" @click="isMenuOpen = false"><BarChart3 :size="18"/> Stats</RouterLink>
         <button class="mobile-nav-item theme-mobile" @click="toggleTheme(); isMenuOpen = false">
            <Sun v-if="isDark" :size="18" />

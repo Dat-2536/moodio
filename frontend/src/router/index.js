@@ -22,9 +22,9 @@ const routes = [
     component: () => import('@/pages/ImagePage.vue')
   },
   {
-    path: '/video',
-    name: 'Video',
-    component: () => import('@/pages/VideoPage.vue')
+    path: '/visualize',
+    name: 'Visualize',
+    component: () => import('@/pages/VisualizePage.vue')
   },
   {
     path: '/stats',
