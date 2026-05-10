@@ -1,9 +1,11 @@
 import { ref, onUnmounted } from 'vue'
+import { normalizeFaceResults } from '@/utils/faceUtils'
 
 export function useImageAnalysis() {
-  const analysisResults = ref(null)
+  const analysisResults = ref([])
   const uploadedImage = ref(null)
   const isAnalyzing = ref(false)
+  const imageSize = ref({ width: 0, height: 0 })
 
   const processImageFile = async (file) => {
     if (!file) return
@@ -15,7 +17,14 @@ export function useImageAnalysis() {
     
     uploadedImage.value = URL.createObjectURL(file)
     isAnalyzing.value = true
-    analysisResults.value = null
+    analysisResults.value = []
+
+    // Get natural dimensions
+    const img = new Image()
+    img.onload = () => {
+      imageSize.value = { width: img.naturalWidth, height: img.naturalHeight }
+    }
+    img.src = uploadedImage.value
 
     const formData = new FormData()
     formData.append('file', file)
@@ -25,7 +34,8 @@ export function useImageAnalysis() {
         method: 'POST', 
         body: formData 
       })
-      analysisResults.value = await res.json()
+      const data = await res.json()
+      analysisResults.value = normalizeFaceResults(data)
     } catch (err) { 
       console.error('Image analysis error:', err) 
     } finally {
@@ -38,7 +48,8 @@ export function useImageAnalysis() {
       URL.revokeObjectURL(uploadedImage.value)
     }
     uploadedImage.value = null
-    analysisResults.value = null
+    analysisResults.value = []
+    imageSize.value = { width: 0, height: 0 }
   }
 
   onUnmounted(() => {
@@ -51,6 +62,7 @@ export function useImageAnalysis() {
     analysisResults,
     uploadedImage,
     isAnalyzing,
+    imageSize,
     processImageFile,
     resetImage
   }

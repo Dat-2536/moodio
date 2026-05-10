@@ -10,6 +10,33 @@ onMounted(() => {
     once: false,
     mirror: true
   })
+
+  // Global scroll listener for auto-hiding scrollbars
+  const scrollTimeouts = new Map()
+  
+  window.addEventListener('scroll', (e) => {
+    let target = e.target
+    
+    // For document scroll, apply to documentElement
+    if (target === document) {
+      target = document.documentElement
+    }
+    
+    if (!(target instanceof HTMLElement)) return
+
+    target.classList.add('is-scrolling')
+    
+    if (scrollTimeouts.has(target)) {
+      clearTimeout(scrollTimeouts.get(target))
+    }
+    
+    const timeout = setTimeout(() => {
+      target.classList.remove('is-scrolling')
+      scrollTimeouts.delete(target)
+    }, 250)
+    
+    scrollTimeouts.set(target, timeout)
+  }, true)
 })
 </script>
 

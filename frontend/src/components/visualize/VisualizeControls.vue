@@ -1,5 +1,6 @@
 <script setup>
-import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Zap, BookOpen, Cpu } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Zap, BookOpen, Cpu, ChevronDown } from 'lucide-vue-next'
 
 const props = defineProps({
   isRunning: Boolean,
@@ -11,6 +12,28 @@ const props = defineProps({
 const emit = defineEmits([
   'run', 'pause', 'resume', 'reset', 'next', 'previous', 'speed-change', 'mode-change'
 ])
+
+const isSpeedOpen = ref(false)
+const speedDropdownRef = ref(null)
+
+const handleSpeedSelect = (s) => {
+  emit('speed-change', s)
+  isSpeedOpen.value = false
+}
+
+const handleClickOutside = (event) => {
+  if (speedDropdownRef.value && !speedDropdownRef.value.contains(event.target)) {
+    isSpeedOpen.value = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('mousedown', handleClickOutside)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('mousedown', handleClickOutside)
+})
 </script>
 
 <template>
@@ -42,14 +65,25 @@ const emit = defineEmits([
 
       <!-- Secondary Settings -->
       <div class="control-row secondary">
-        <div class="setting-group speed-selector">
-          <Zap :size="14" class="setting-icon" />
-          <select :value="speed" @change="emit('speed-change', parseFloat($event.target.value))" class="select-input">
-            <option :value="0.5">0.5x</option>
-            <option :value="1">1.0x</option>
-            <option :value="1.5">1.5x</option>
-            <option :value="2">2.0x</option>
-          </select>
+        <div class="setting-group speed-selector-wrapper" ref="speedDropdownRef">
+          <button class="speed-toggle-btn" @click="isSpeedOpen = !isSpeedOpen">
+            <Zap :size="14" class="setting-icon" />
+            <span class="speed-value">{{ speed }}x</span>
+            <ChevronDown :size="14" :class="['chevron-icon', { rotate: isSpeedOpen }]" />
+          </button>
+          
+          <transition name="fade-scale">
+            <div v-if="isSpeedOpen" class="speed-dropdown glass card">
+              <div 
+                v-for="s in [0.5, 1, 1.5, 2]" 
+                :key="s"
+                :class="['speed-option', { active: speed === s }]"
+                @click="handleSpeedSelect(s)"
+              >
+                {{ s.toFixed(1) }}x
+              </div>
+            </div>
+          </transition>
         </div>
 
         <div class="mode-toggle">
@@ -122,29 +156,93 @@ const emit = defineEmits([
   justify-content: center;
 }
 
-.setting-group {
+.speed-selector-wrapper {
+  position: relative;
   height: 40px;
+}
+
+.speed-toggle-btn {
+  height: 100%;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 0 12px;
-  background: rgba(var(--primary-rgb), 0.05);
-  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  background: rgba(var(--primary-rgb), 0.08);
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
   border-radius: 10px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 85px;
+}
+
+.speed-toggle-btn:hover {
+  background: rgba(var(--primary-rgb), 0.15);
+  border-color: var(--primary);
 }
 
 .setting-icon {
   color: var(--primary);
 }
 
-.select-input {
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  font-weight: 700;
+.speed-value {
+  flex: 1;
+  text-align: left;
+}
+
+.chevron-icon {
+  opacity: 0.5;
+  transition: transform 0.3s ease;
+}
+
+.chevron-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.speed-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 100px;
+  padding: 6px;
+  z-index: 1000;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+}
+
+.speed-option {
+  padding: 8px 12px;
+  border-radius: 6px;
   font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
   cursor: pointer;
-  outline: none;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.speed-option:hover {
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+}
+
+.speed-option.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Transitions */
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.9) translateY(-10px);
 }
 
 .mode-toggle {

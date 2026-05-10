@@ -23,8 +23,20 @@ const getStepIcon = (id) => {
 </script>
 
 <template>
-  <div class="pipeline-shell">
+  <div class="pipeline-shell app-scrollbar">
     <div class="pipeline-track">
+      <!-- Continuous Background Track -->
+      <div class="track-wrapper" :style="{ 
+        left: `${(1 / (2 * steps.length)) * 100}%`, 
+        right: `${(1 / (2 * steps.length)) * 100}%` 
+      }">
+        <div class="track-base"></div>
+        <div 
+          class="track-progress" 
+          :style="{ width: `${(completedSteps.length > 1 ? (completedSteps.length - 1) / (steps.length - 1) : 0) * 100}%` }"
+        ></div>
+      </div>
+
       <div 
         v-for="(step, index) in steps" 
         :key="step.id"
@@ -35,7 +47,6 @@ const getStepIcon = (id) => {
         ]"
         @click="emit('step-click', index)"
       >
-        <div class="step-connector" v-if="index > 0"></div>
         <div class="step-node">
           <div class="step-marker">
             <div class="marker-inner">
@@ -57,12 +68,6 @@ const getStepIcon = (id) => {
 .pipeline-shell {
   width: 100%;
   overflow-x: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.pipeline-shell::-webkit-scrollbar {
-  display: none;
 }
 
 .pipeline-track {
@@ -70,71 +75,92 @@ const getStepIcon = (id) => {
   align-items: center;
   justify-content: space-between;
   min-width: 700px;
-  padding: 10px 0;
+  padding: 20px 30px;
+  position: relative;
+}
+
+.track-wrapper {
+  position: absolute;
+  top: 41px; /* Vertical center: padding (20px) + marker radius (21px) */
+  height: 4px;
+  z-index: 1;
+}
+
+.track-base {
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--primary-rgb), 0.1);
+  border-radius: 99px;
+}
+
+.track-progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--primary);
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
 }
 
 .pipeline-step {
   flex: 1;
   position: relative;
   cursor: pointer;
+  z-index: 2;
 }
 
 .step-node {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  position: relative;
-  z-index: 2;
+  gap: 12px;
 }
 
 .step-marker {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: rgba(var(--surface-rgb), 0.8);
-  border: 2px solid rgba(var(--primary-rgb), 0.15);
+  /* Use solid background to hide the line behind */
+  background: var(--surface-color);
+  border: 2px solid rgba(var(--primary-rgb), 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 3;
 }
 
 .marker-inner {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.step-connector {
-  position: absolute;
-  left: -50%;
-  right: 50%;
-  top: 21px;
-  height: 3px;
-  background: rgba(var(--primary-rgb), 0.1);
-  z-index: 1;
-  transition: background 0.3s ease;
+  z-index: 4;
 }
 
 .pipeline-step.active .step-marker {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
-  box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.4);
-  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.5);
+  transform: scale(1.2);
 }
 
 .pipeline-step.completed .step-marker {
-  background: rgba(var(--primary-rgb), 0.1);
+  background: white;
   color: var(--primary);
   border-color: var(--primary);
+  box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.15);
 }
 
-.pipeline-step.completed .step-connector {
-  background: var(--primary);
+[data-theme='dark'] .pipeline-step.completed .step-marker {
+  background: #1e293b; /* Solid dark color matching surface */
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .step-label {

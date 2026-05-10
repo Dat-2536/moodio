@@ -155,6 +155,8 @@ const {
   gap: 40px;
   padding: 32px;
   align-items: flex-start;
+  position: relative;
+  z-index: 20;
 }
 
 .section-kicker {

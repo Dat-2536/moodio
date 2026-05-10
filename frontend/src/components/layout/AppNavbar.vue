@@ -70,11 +70,11 @@ onUnmounted(() => {
     </div>
     
     <transition name="slide">
-      <div v-if="isMenuOpen" class="mobile-menu">
+      <div v-if="isMenuOpen" class="mobile-menu app-scrollbar">
         <RouterLink to="/home" class="mobile-nav-item" @click="isMenuOpen = false"><Home :size="18"/> Home</RouterLink>
         <RouterLink to="/webcam" class="mobile-nav-item" @click="isMenuOpen = false"><Camera :size="18"/> Webcam</RouterLink>
         <RouterLink to="/image" class="mobile-nav-item" @click="isMenuOpen = false"><Upload :size="18"/> Image</RouterLink>
-        <RouterLink to="/visualize" class="mobile-nav-item" @click="isMenuOpen = false"><BrainCircuit :size="18"/> Visualize</RouterLink>
+        <RouterLink to="/visualize" class="mobile-nav-item" @click="isMenuOpen = false"><ScanFace :size="18"/> Visualize</RouterLink>
         <RouterLink to="/stats" class="mobile-nav-item" @click="isMenuOpen = false"><BarChart3 :size="18"/> Stats</RouterLink>
         <button class="mobile-nav-item theme-mobile" @click="toggleTheme(); isMenuOpen = false">
            <Sun v-if="isDark" :size="18" />
@@ -203,6 +203,8 @@ onUnmounted(() => {
   gap: 1rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   z-index: 99;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
 }
 
 .mobile-nav-item {

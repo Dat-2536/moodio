@@ -74,7 +74,7 @@ const technicalExplanations = {
 </script>
 
 <template>
-  <div class="explanation-card card glass p-8">
+  <div class="explanation-card card glass p-8 app-scrollbar">
     <div class="panel-header mb-6">
       <div class="title-row">
         <div class="icon-box">
@@ -131,6 +131,7 @@ const technicalExplanations = {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .panel-header {

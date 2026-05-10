@@ -37,7 +37,10 @@ defineProps({
           </div>
         </div>
       </div>
+      
+      <slot name="footer" />
     </div>
+
     <div class="placeholder-text" v-else>
       <slot name="placeholder">Đang chờ nhận diện...</slot>
     </div>
