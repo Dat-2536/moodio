@@ -59,7 +59,7 @@ onUnmounted(() => {
           <Moon v-else :size="20" />
         </button>
 
-        <a href="https://github.com/Dat-2536/emoreg" target="_blank" class="github-link">
+        <a href="https://github.com/Dat-2536/moodio" target="_blank" class="github-link">
           <Github :size="20" />
         </a>
       </div>
