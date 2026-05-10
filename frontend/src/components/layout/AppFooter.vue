@@ -1,7 +1,8 @@
 <template>
   <footer class="footer">
     <div class="container">
-      <p>© 2026 EmotionAI Project. Built for high-performance AI monitoring.</p>
+      <p>© 2026 Moodio AI. Made with ❤️ by Group 2 - L02</p>
+      <p class="text-sm">Faculty of Computer Science and Engineering - Ho Chi Minh City University of Technology</p>
     </div>
   </footer>
 </template>

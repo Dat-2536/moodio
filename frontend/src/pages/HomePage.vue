@@ -46,41 +46,19 @@ onMounted(() => {
 
     <!-- ── HERO ── -->
     <section class="hero-section">
-      <div class="hero-badge" data-aos="fade-down">🧠 AI-Powered · Deep Learning · Real-time</div>
+      <div class="hero-badge" data-aos="fade-down">Introduction to Artificial Intelligence - Homework 4 - HK252</div>
       <h1 class="hero-title" data-aos="zoom-in" data-aos-delay="100">
         <span class="word-group">Nhận Diện </span>
         <span class="word-group">Cảm Xúc</span> <br/>
-        <span class="glow-text">Intelligence</span>
+        <span class="logo-text">MOODIO<span class="highlight">AI</span></span>
       </h1>
       <p class="hero-desc" data-aos="fade-up" data-aos-delay="200">
-        Hệ thống AI tiên tiến dựa trên ResNet50, cung cấp khả năng phân tích biểu cảm
-        khuôn mặt với độ chính xác vượt trội — thời gian thực, đa khuôn mặt.
+        Ứng dụng AI dựa trên ResNet50, cung cấp khả năng phân tích biểu cảm
+        khuôn mặt với độ chính xác vượt trội trong thời gian thực.
       </p>
       <div class="hero-actions" data-aos="fade-up" data-aos-delay="300">
         <button class="btn btn-primary btn-glow" @click="router.push('/webcam')">Trải nghiệm ngay</button>
         <button class="btn btn-outline" @click="router.push('/visualize')">Xem AI hoạt động</button>
-      </div>
-
-      <div class="hero-stats" data-aos="fade-up" data-aos-delay="400">
-        <div class="stat-item">
-          <span class="stat-num">7</span>
-          <span class="stat-label">Emotion Classes</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-num">50</span>
-          <span class="stat-label">Network Layers</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-num">&lt;0.5s</span>
-          <span class="stat-label">Inference Time</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-num">35K+</span>
-          <span class="stat-label">Training Images</span>
-        </div>
       </div>
 
       <div class="features-grid">
@@ -100,7 +78,7 @@ onMounted(() => {
       <div class="section-header" data-aos="fade-up">
         <div class="section-kicker">Pipeline</div>
         <h2>Cách hệ thống hoạt động</h2>
-        <p>Từ pixel thô đến kết quả cảm xúc — quy trình 4 bước của AI</p>
+        <p>Từ pixel thô đến kết quả cảm xúc - quy trình 4 bước của AI</p>
       </div>
 
       <div class="steps-grid">
@@ -125,7 +103,7 @@ onMounted(() => {
       <div class="section-header" data-aos="fade-up">
         <div class="section-kicker">Nhận diện</div>
         <h2>7 Cảm Xúc Cơ Bản</h2>
-        <p>Dựa trên lý thuyết cảm xúc cơ bản của Paul Ekman — phổ quát toàn cầu</p>
+        <p>Dựa trên lý thuyết cảm xúc cơ bản của Paul Ekman - phổ quát toàn cầu</p>
       </div>
 
       <div class="emotions-grid">
@@ -147,7 +125,7 @@ onMounted(() => {
           <h2>Kiến Trúc ResNet50</h2>
           <p>
             ResNet50 giải quyết thành công bài toán <strong>Vanishing Gradient</strong> nhờ
-            <em>Residual Connections</em> — các "đường tắt" cho phép gradient lan truyền ngược
+            <em>Residual Connections</em> - các "đường tắt" cho phép gradient lan truyền ngược
             hiệu quả qua 50 lớp mạng.
           </p>
           <p style="margin-top: 1rem;">
@@ -227,7 +205,7 @@ onMounted(() => {
       <div class="cta-card glass">
         <div class="cta-glow"></div>
         <h2>Sẵn sàng trải nghiệm?</h2>
-        <p>Khám phá sức mạnh của AI trong việc hiểu cảm xúc con người. Không cần cài đặt — chạy trực tiếp trên trình duyệt.</p>
+        <p>Khám phá sức mạnh của AI trong việc hiểu cảm xúc con người. Không cần cài đặt - chạy trực tiếp trên trình duyệt.</p>
         <div class="cta-actions">
           <button class="btn btn-primary btn-glow" @click="router.push('/webcam')">
             <Camera :size="18" /> Bật Webcam
@@ -266,6 +244,7 @@ onMounted(() => {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
+  margin-top: 2rem;
   margin-bottom: 2rem;
   border: 1px solid rgba(var(--primary-rgb), 0.2);
 }
@@ -281,6 +260,16 @@ onMounted(() => {
 .glow-text {
   color: var(--primary);
   text-shadow: 0 0 40px rgba(var(--primary-rgb), 0.5);
+}
+
+.logo-text {
+  font-weight: 800;
+  font-size: 5rem;
+  letter-spacing: -1px;
+}
+
+.highlight {
+  color: var(--primary);
 }
 
 .hero-desc {

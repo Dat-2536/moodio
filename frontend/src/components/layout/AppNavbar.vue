@@ -2,9 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
-  Home, Camera, Upload, BrainCircuit, BarChart3, Sun, Moon, Github, Menu, X, 
-  ScanEye,
-  ScanFace
+  Home, Camera, Upload, BarChart3, Sun, Moon, Github, Menu, X, ScanFace
 } from 'lucide-vue-next'
 import { useTheme } from '@/composables/useTheme'
 
@@ -31,7 +29,8 @@ onUnmounted(() => {
   <nav class="navbar">
     <div class="container nav-content">
       <RouterLink to="/" class="logo">
-        <div class="logo-icon"></div>
+        <!-- <div class="logo-icon"></div> -->
+        <img class="app-logo" src="../../assets/favicon.ico" alt="Logo">
         <span class="logo-text">MOODIO<span class="highlight">AI</span></span>
       </RouterLink>
 
@@ -112,6 +111,11 @@ onUnmounted(() => {
   cursor: pointer;
   text-decoration: none;
   color: inherit;
+}
+
+.app-logo {
+  width: 40px;
+  height: 36px;
 }
 
 .logo-icon {

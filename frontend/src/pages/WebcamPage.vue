@@ -70,7 +70,6 @@ const handleStart = () => {
           <div v-if="!isWebcamActive" class="camera-placeholder">
             <div class="icon-stack">
               <ScanFace :size="64" class="faint-icon" />
-              <Camera :size="32" class="overlay-icon" />
             </div>
             <p>Sẵn sàng kết nối với trí tuệ nhân tạo Moodio</p>
             <AppButton class="mt-6" @click="handleStart">
@@ -227,7 +226,7 @@ const handleStart = () => {
 }
 
 .faint-icon { 
-  opacity: 0.2; 
+  opacity: 0.5; 
   margin-bottom: 1rem; 
 }
 
