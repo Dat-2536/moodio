@@ -56,14 +56,14 @@ const statsCards = computed(() => [
     color: '#76B900'
   },
   { 
-    label: 'Avg Confidence', 
+    label: 'Average Confidence', 
     value: dashboardData.value.total_scans > 0 ? `${(dashboardData.value.avg_confidence * 100).toFixed(1)}%` : '0%', 
     icon: ShieldCheck,
     color: '#76B900',
     sublabel: 'Based on model score'
   },
   { 
-    label: 'Avg Latency', 
+    label: 'Average Latency', 
     value: dashboardData.value.total_scans > 0 ? `${Math.round(dashboardData.value.avg_latency_ms)}ms` : '0ms', 
     icon: Zap,
     color: '#76B900'

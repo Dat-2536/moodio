@@ -7,8 +7,11 @@ import sys
 import time
 from PIL import Image
 
-# Thêm đường dẫn tới thư mục ai để import inference và stats
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# Thêm đường dẫn tới thư mục gốc để import ai
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.append(BASE_DIR)
+
 from ai.inference import load_model, predict
 from ai.stats_service import safe_save_detection_log, get_stats
 
@@ -24,7 +27,7 @@ app.add_middleware(
 )
 
 # Load model khi khởi động
-MODEL_PATH = os.path.join(os.path.dirname(__file__), '../ai/best_model_final.pth')
+MODEL_PATH = os.path.join(BASE_DIR, 'ai/best_model_final.pth')
 model = load_model(MODEL_PATH)
 
 @app.get("/")
