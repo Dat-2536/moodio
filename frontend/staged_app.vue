@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { 
   Sun, Moon, Camera, Upload, BarChart3, Home, Menu, X, Cpu, 
-  ShieldCheck, Zap, Github, Activity, LayoutGrid, History, Settings, Play, Film, BookOpen, HelpCircle
+  ShieldCheck, Zap, Github, Activity, LayoutGrid, History, Settings, Play, Film
 } from 'lucide-vue-next'
 import AOS from 'aos'
 import 'aos/dist/aos.css'
@@ -24,9 +24,7 @@ const setTab = (tab) => {
   isMenuOpen.value = false
 }
 
-watch(currentTab, (newTab) => {
-  if (newTab !== 'webcam') stopWebcam()
-  if (newTab !== 'video') stopVideoAnalysis()
+watch(currentTab, () => {
   nextTick(() => {
     AOS.refresh()
   })
@@ -67,9 +65,9 @@ const stats = [
 ]
 
 const features = [
-  { icon: Cpu, title: 'ResNet50 Model', desc: 'Kiến trúc Deep Learning tối ưu cho nhận diện biểu cảm.' },
-  { icon: Zap, title: 'Real-time', desc: 'Độ trễ cực thấp (<0.5s) đảm bảo trải nghiệm tức thì.' },
-  { icon: ShieldCheck, title: 'Privacy First', desc: 'Xử lý dữ liệu an toàn, không lưu trữ hình ảnh cá nhân.' }
+  { icon: Cpu, title: 'ResNet50 Model', desc: 'Kiß║┐n tr├║c Deep Learning tß╗æi ╞░u cho nhß║¡n diß╗çn biß╗âu cß║úm.' },
+  { icon: Zap, title: 'Real-time', desc: '─Éß╗Ö trß╗à cß╗▒c thß║Ñp (<0.5s) ─æß║úm bß║úo trß║úi nghiß╗çm tß╗⌐c th├¼.' },
+  { icon: ShieldCheck, title: 'Privacy First', desc: 'Xß╗¡ l├╜ dß╗» liß╗çu an to├án, kh├┤ng l╞░u trß╗» h├¼nh ß║únh c├í nh├ón.' }
 ]
 
 // Video Analysis Logic
@@ -119,7 +117,7 @@ const startVideoAnalysis = () => {
         console.error('Analysis error:', err)
       }
     }, 'image/jpeg', 0.7)
-  }, 1000) // Gửi frame mỗi giây
+  }, 1000) // Gß╗¡i frame mß╗ùi gi├óy
 }
 
 const stopVideoAnalysis = () => {
@@ -130,137 +128,15 @@ const stopVideoAnalysis = () => {
   }
 }
 
-// Webcam Logic
-const webcamStream = ref(null)
-const webcamVideoRef = ref(null)
-const webcamCanvasRef = ref(null)
-const webcamInterval = ref(null)
-const isWebcamActive = ref(false)
-
-const startWebcam = async () => {
-  try {
-    webcamStream.value = await navigator.mediaDevices.getUserMedia({ video: true })
-    if (webcamVideoRef.value) {
-      webcamVideoRef.value.srcObject = webcamStream.value
-    }
-    isWebcamActive.value = true
-    
-    webcamInterval.value = setInterval(async () => {
-      if (!webcamVideoRef.value || !webcamCanvasRef.value) return
-      const canvas = webcamCanvasRef.value
-      const video = webcamVideoRef.value
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-      
-      canvas.toBlob(async (blob) => {
-        const formData = new FormData()
-        formData.append('file', blob, 'webcam.jpg')
-        try {
-          const res = await fetch('http://localhost:8000/stream-frame', { method: 'POST', body: formData })
-          const data = await res.json()
-          currentEmotion.value = data
-        } catch (err) { console.error(err) }
-      }, 'image/jpeg', 0.6)
-    }, 1000)
-  } catch (err) {
-    console.error("Webcam access denied:", err)
-    alert("Vui lòng cho phép truy cập camera để sử dụng tính năng này.")
-  }
-}
-
-const stopWebcam = () => {
-  isWebcamActive.value = false
-  if (webcamStream.value) {
-    webcamStream.value.getTracks().forEach(track => track.stop())
-    webcamStream.value = null
-  }
-  if (webcamInterval.value) {
-    clearInterval(webcamInterval.value)
-    webcamInterval.value = null
-  }
-}
-
-// Image Upload & Paste Logic
-const analysisResults = ref(null)
-const isDragging = ref(false)
-const uploadedImage = ref(null)
-
-const handleDragEnter = (e) => {
-  e.preventDefault()
-  isDragging.value = true
-}
-
-const handleDragLeave = (e) => {
-  // Use a small timeout to check if we really left or just moved to a child
-  // But with pointer-events: none on children during drag, this is easier
-  if (e.currentTarget.contains(e.relatedTarget)) return
-  isDragging.value = false
-}
-
-const handleDrop = (e, callback) => {
-  e.preventDefault()
-  isDragging.value = false
-  const file = e.dataTransfer?.files?.[0]
-  if (file) callback(file)
-}
-
-const handleImageUpload = (e) => {
-  const file = e.target.files[0]
-  if (file) processImageFile(file)
-}
-
-const processImageFile = async (file) => {
-  isDragging.value = false
-  if (!file) return
-  uploadedImage.value = URL.createObjectURL(file)
-  const formData = new FormData()
-  formData.append('file', file)
-  
-  try {
-    const res = await fetch('http://localhost:8000/analyze-image', { method: 'POST', body: formData })
-    analysisResults.value = await res.json()
-  } catch (err) { console.error(err) }
-}
-
-const handlePaste = (e) => {
-  const items = e.clipboardData.items
-  for (let i = 0; i < items.length; i++) {
-    if (items[i].type.indexOf('image') !== -1) {
-      const file = items[i].getAsFile()
-      processImageFile(file)
-      break
-    }
-  }
-}
-
-onMounted(() => {
-  document.documentElement.setAttribute('data-theme', 'light')
-  window.addEventListener('resize', handleResize)
-  window.addEventListener('paste', handlePaste)
-  // Safety reset for dragging state
-  window.addEventListener('dragend', () => isDragging.value = false)
-  window.addEventListener('drop', () => isDragging.value = false)
-  AOS.init({ duration: 800, once: false, mirror: true })
-})
-
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  window.removeEventListener('paste', handlePaste)
-  window.removeEventListener('dragend', () => isDragging.value = false)
-  window.removeEventListener('drop', () => isDragging.value = false)
-  stopWebcam()
   stopVideoAnalysis()
   if (videoUrl.value) URL.revokeObjectURL(videoUrl.value)
-  if (uploadedImage.value) URL.revokeObjectURL(uploadedImage.value)
 })
 
 </script>
 
 <template>
   <div class="app-wrapper">
-    <NeuralNetworkBackground v-if="currentTab === 'home'" />
     <div class="bg-dots"></div>
     <div class="bg-gradient"></div>
     
@@ -317,7 +193,7 @@ onUnmounted(() => {
           <button class="mobile-nav-item theme-mobile" @click="toggleTheme">
              <Sun v-if="isDark" :size="18" />
              <Moon v-else :size="18" />
-             {{ isDark ? 'Chế độ Sáng' : 'Chế độ Tối' }}
+             {{ isDark ? 'Chß║┐ ─æß╗Ö S├íng' : 'Chß║┐ ─æß╗Ö Tß╗æi' }}
           </button>
         </div>
       </transition>
@@ -331,20 +207,21 @@ onUnmounted(() => {
             
             <!-- HOME TAB -->
             <section v-if="currentTab === 'home'" class="hero-section">
+              <NeuralNetworkBackground />
               <div class="hero-content">
                 <div class="hero-badge" data-aos="fade-down">Deep Learning Engine v1.0</div>
                 <h1 class="hero-title" data-aos="zoom-in" data-aos-delay="100">
-                  <span class="word-group">Nhận Diện</span>
-                  <span class="word-group">Cảm Xúc</span> <br/> 
+                  <span class="word-group">Nhß║¡n Diß╗çn</span>
+                  <span class="word-group">Cß║úm X├║c</span> <br/> 
                   <span class="glow-text">Intelligence</span>
                 </h1>
                 <p class="hero-desc" data-aos="fade-up" data-aos-delay="200">
-                  Hệ thống AI tiên tiến dựa trên ResNet50, cung cấp khả năng phân tích biểu cảm 
-                  khuôn mặt với độ chính xác vượt trội.
+                  Hß╗ç thß╗æng AI ti├¬n tiß║┐n dß╗▒a tr├¬n ResNet50, cung cß║Ñp khß║ú n─âng ph├ón t├¡ch biß╗âu cß║úm 
+                  khu├┤n mß║╖t vß╗¢i ─æß╗Ö ch├¡nh x├íc v╞░ß╗út trß╗Öi.
                 </p>
                 <div class="hero-actions">
-                  <button class="btn btn-primary btn-glow" @click="setTab('webcam')">Trải nghiệm ngay</button>
-                  <button class="btn btn-outline" @click="setTab('guide')">Xem hướng dẫn</button>
+                  <button class="btn btn-primary btn-glow" @click="setTab('webcam')">Trß║úi nghiß╗çm ngay</button>
+                  <button class="btn btn-outline" @click="setTab('upload')">Xem h╞░ß╗¢ng dß║½n</button>
                 </div>
 
                 <div class="features-grid">
@@ -359,26 +236,26 @@ onUnmounted(() => {
 
                 <div class="academic-section mt-12" data-aos="fade-up">
                   <div class="card glass text-left" style="padding: 3rem; border-radius: 20px;">
-                    <h2 class="text-3xl font-bold mb-6" data-aos="fade-right" style="color: var(--primary);">Nghiên Cứu Deep Learning</h2>
+                    <h2 class="text-3xl font-bold mb-6" data-aos="fade-right" style="color: var(--primary);">Nghi├¬n Cß╗⌐u Deep Learning</h2>
                     <p class="mb-4" data-aos="fade-up" data-aos-delay="100" style="line-height: 1.8; font-size: 1.1rem; color: var(--text-secondary);">
-                      Ứng dụng này là minh chứng trực quan cho sức mạnh của mạng nơ-ron tích chập sâu (Deep Convolutional Neural Networks). 
-                      Được tinh chỉnh dựa trên kiến trúc <strong>ResNet50</strong> (Residual Networks), mô hình đã giải quyết thành công bài toán <em>Vanishing Gradient</em>, 
-                      cho phép trích xuất các đặc trưng khuôn mặt với độ sâu lên đến 50 lớp.
+                      ß╗¿ng dß╗Ñng n├áy l├á minh chß╗⌐ng trß╗▒c quan cho sß╗⌐c mß║ính cß╗ºa mß║íng n╞í-ron t├¡ch chß║¡p s├óu (Deep Convolutional Neural Networks). 
+                      ─É╞░ß╗úc tinh chß╗ënh dß╗▒a tr├¬n kiß║┐n tr├║c <strong>ResNet50</strong> (Residual Networks), m├┤ h├¼nh ─æ├ú giß║úi quyß║┐t th├ánh c├┤ng b├ái to├ín <em>Vanishing Gradient</em>, 
+                      cho ph├⌐p tr├¡ch xuß║Ñt c├íc ─æß║╖c tr╞░ng khu├┤n mß║╖t vß╗¢i ─æß╗Ö s├óu l├¬n ─æß║┐n 50 lß╗¢p.
                     </p>
                     <p class="mb-6" data-aos="fade-up" data-aos-delay="200" style="line-height: 1.8; font-size: 1.1rem; color: var(--text-secondary);">
-                      Bằng cách áp dụng các kỹ thuật như Data Augmentation, Transfer Learning và tối ưu hóa hàm suy hao, 
-                      hệ thống không chỉ đạt độ chính xác cao trên tập dữ liệu kiểm thử mà còn có khả năng tổng quát hóa 
-                      vượt trội trong các điều kiện môi trường thực tế (ánh sáng phức tạp, góc nghiêng khuôn mặt).
+                      Bß║▒ng c├ích ├íp dß╗Ñng c├íc kß╗╣ thuß║¡t nh╞░ Data Augmentation, Transfer Learning v├á tß╗æi ╞░u h├│a h├ám suy hao, 
+                      hß╗ç thß╗æng kh├┤ng chß╗ë ─æß║ít ─æß╗Ö ch├¡nh x├íc cao tr├¬n tß║¡p dß╗» liß╗çu kiß╗âm thß╗¡ m├á c├▓n c├│ khß║ú n─âng tß╗òng qu├ít h├│a 
+                      v╞░ß╗út trß╗Öi trong c├íc ─æiß╗üu kiß╗çn m├┤i tr╞░ß╗¥ng thß╗▒c tß║┐ (├ính s├íng phß╗⌐c tß║íp, g├│c nghi├¬ng khu├┤n mß║╖t).
                     </p>
                     
-                    <h3 class="mb-4 font-bold" data-aos="fade-right" data-aos-delay="300" style="font-size: 1.2rem;">Kiến Trúc Hệ Thống (ResNet50 Flow)</h3>
+                    <h3 class="mb-4 font-bold" data-aos="fade-right" data-aos-delay="300" style="font-size: 1.2rem;">Kiß║┐n Tr├║c Hß╗ç Thß╗æng (ResNet50 Flow)</h3>
                     <div class="architecture-diagram" data-aos="zoom-in" data-aos-delay="400">
                       <div class="arch-box">Input Layer <br/><small>(224x224 RGB)</small></div>
-                      <div class="arch-arrow">➔</div>
+                      <div class="arch-arrow">Γ₧ö</div>
                       <div class="arch-box highlight-box">ResNet50 Backbone <br/><small>(Feature Extraction)</small></div>
-                      <div class="arch-arrow">➔</div>
+                      <div class="arch-arrow">Γ₧ö</div>
                       <div class="arch-box">Global Average Pooling <br/><small>(Dimensionality Reduction)</small></div>
-                      <div class="arch-arrow">➔</div>
+                      <div class="arch-arrow">Γ₧ö</div>
                       <div class="arch-box end-box">Softmax Output <br/><small>(Emotion Classes)</small></div>
                     </div>
                   </div>
@@ -391,35 +268,48 @@ onUnmounted(() => {
               <div class="page-header">
                 <div>
                   <h2 class="page-title">Live Vision Analysis</h2>
-                  <p class="page-subtitle">Nhận diện thời gian thực qua luồng camera của bạn.</p>
+                  <p class="page-subtitle">Nhß║¡n diß╗çn thß╗¥i gian thß╗▒c qua luß╗ông camera cß╗ºa bß║ín.</p>
                 </div>
-                <div v-if="isWebcamActive" class="status-pill"><span class="pulse-dot"></span> AI Engine Running</div>
+                <div class="status-pill"><span class="pulse-dot"></span> AI Engine Running</div>
               </div>
 
               <div class="vision-grid">
                 <div class="vision-main card glass">
                   <div class="hud-container">
-                    <video v-if="isWebcamActive" ref="webcamVideoRef" autoplay playsinline class="webcam-video"></video>
-                    <canvas ref="webcamCanvasRef" style="display: none;"></canvas>
-                    <div v-if="!isWebcamActive" class="camera-placeholder">
-                        <Camera :size="64" class="faint-icon" />
-                        <p>Vui lòng kích hoạt camera để bắt đầu</p>
-                        <button class="btn btn-primary mt-6" @click="startWebcam">Kích hoạt Camera</button>
+                    <div class="hud-corners">
+                      <div class="corner tl"></div><div class="corner tr"></div>
+                      <div class="corner bl"></div><div class="corner br"></div>
                     </div>
-                    <div v-if="isWebcamActive" class="scanner-bar"></div>
+                    <div class="scanner-bar"></div>
+                    <div class="camera-placeholder">
+                        <Camera :size="64" class="faint-icon" />
+                        <p>Waiting for Camera access...</p>
+                        <button class="btn btn-primary mt-6">K├¡ch hoß║ít Camera</button>
+                    </div>
                   </div>
                 </div>
 
                 <div class="vision-sidebar">
                   <div class="sidebar-card card glass">
-                    <h3>Real-time Emotion</h3>
-                    <div class="current-emotion-large" v-if="currentEmotion">
-                      <div class="emotion-badge">{{ currentEmotion.emotion }}</div>
-                      <div class="confidence-text">Confidence: {{ Math.round(currentEmotion.confidence * 100) }}%</div>
+                    <h3>Emotion Analysis</h3>
+                    <div class="emotion-list">
+                      <div v-for="e in emotions" :key="e.name" class="emotion-item">
+                        <div class="emotion-info">
+                          <span>{{ e.name }}</span>
+                          <span>{{ e.value }}%</span>
+                        </div>
+                        <div class="progress-bg"><div class="progress-fill" :style="{ width: e.value + '%' }"></div></div>
+                      </div>
                     </div>
-                    <div class="placeholder-text" v-else>Đang chờ nhận diện...</div>
                   </div>
-                  <button v-if="isWebcamActive" class="btn btn-outline w-full" @click="stopWebcam">Tắt Camera</button>
+                  <div class="sidebar-card card glass">
+                    <h3>System Logs</h3>
+                    <div class="log-list">
+                      <div class="log-entry">Detecting face #1...</div>
+                      <div class="log-entry">Confidence: 98.4%</div>
+                      <div class="log-entry">Status: Stable</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -429,34 +319,22 @@ onUnmounted(() => {
               <div class="page-header">
                 <div>
                   <h2 class="page-title">Video Analysis</h2>
-                  <p class="page-subtitle">Tải lên video để phân tích cảm xúc từng khung hình.</p>
+                  <p class="page-subtitle">Tß║úi l├¬n video ─æß╗â ph├ón t├¡ch cß║úm x├║c tß╗½ng khung h├¼nh.</p>
                 </div>
                 <div v-if="videoUrl" class="status-pill"><span class="pulse-dot"></span> Analyzing Frames...</div>
               </div>
 
-              <div v-if="!videoUrl" :class="['upload-container', 'card', 'glass', { dragging: isDragging }]" @click="$refs.videoInput.click()"
-                   @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave"
-                   @drop="e => handleDrop(e, f => handleVideoUpload({ target: { files: [f] }}))">
+              <div v-if="!videoUrl" class="upload-container card glass" @click="$refs.videoInput.click()">
                 <div class="drop-zone">
                     <div class="upload-icon-circle"><Film :size="32" /></div>
-                    <h3>Chọn Video để phân tích</h3>
-                    <p>Hỗ trợ MP4, WebM (Tối đa 50MB)</p>
-                    <button class="btn btn-outline mt-8">Chọn từ máy tính</button>
+                    <h3>Chß╗ìn Video ─æß╗â ph├ón t├¡ch</h3>
+                    <p>Hß╗ù trß╗ú MP4, WebM (Tß╗æi ─æa 50MB)</p>
+                    <button class="btn btn-outline mt-8">Chß╗ìn tß╗½ m├íy t├¡nh</button>
                     <input type="file" ref="videoInput" hidden accept="video/*" @change="handleVideoUpload">
                 </div>
               </div>
 
-              <div v-else :class="['vision-grid', 'relative-container', { dragging: isDragging }]"
-                   @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave"
-                   @drop="e => handleDrop(e, f => handleVideoUpload({ target: { files: [f] }}))">
-                
-                <div v-if="isDragging" class="drop-overlay">
-                  <div class="drop-overlay-content">
-                    <Film :size="48" />
-                    <p>Thả video vào đây để thay đổi</p>
-                  </div>
-                </div>
-
+              <div v-else class="vision-grid">
                 <div class="vision-main card glass">
                   <div class="hud-container video-hud">
                     <video 
@@ -479,9 +357,9 @@ onUnmounted(() => {
                       <div class="emotion-badge">{{ currentEmotion.emotion }}</div>
                       <div class="confidence-text">Confidence: {{ Math.round(currentEmotion.confidence * 100) }}%</div>
                     </div>
-                    <div class="placeholder-text" v-else>Đang chờ khung hình...</div>
+                    <div class="placeholder-text" v-else>─Éang chß╗¥ khung h├¼nh...</div>
                   </div>
-                  <button class="btn btn-outline w-full" @click="videoUrl = ''; stopVideoAnalysis()">Tải video khác</button>
+                  <button class="btn btn-outline w-full" @click="videoUrl = ''; stopVideoAnalysis()">Tß║úi video kh├íc</button>
                 </div>
               </div>
             </section>
@@ -491,81 +369,16 @@ onUnmounted(() => {
               <div class="page-header">
                 <div>
                   <h2 class="page-title">Image Analysis</h2>
-                  <p class="page-subtitle">Tải ảnh lên hoặc Ctrl+V để phân tích biểu cảm chi tiết.</p>
+                  <p class="page-subtitle">Tß║úi ß║únh l├¬n ─æß╗â ph├ón t├¡ch biß╗âu cß║úm khu├┤n mß║╖t chi tiß║┐t.</p>
                 </div>
               </div>
 
-              <div v-if="!uploadedImage" :class="['upload-container', 'card', 'glass', { dragging: isDragging }]" 
-                   @click="$refs.imgInput.click()" 
-                   @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave"
-                   @drop="e => handleDrop(e, processImageFile)">
+              <div class="upload-container card glass">
                 <div class="drop-zone">
                     <div class="upload-icon-circle"><Upload :size="32" /></div>
-                    <h3>Kéo thả hoặc dán (Ctrl+V) ảnh</h3>
-                    <p>Hỗ trợ JPG, PNG, WEBP (Tối đa 5MB)</p>
-                    <button class="btn btn-outline mt-8">Chọn từ máy tính</button>
-                    <input type="file" ref="imgInput" hidden accept="image/*" @change="handleImageUpload">
-                </div>
-              </div>
-
-              <div v-else :class="['vision-grid', 'relative-container', { dragging: isDragging }]"
-                   @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave"
-                   @drop="e => handleDrop(e, processImageFile)">
-                
-                <div v-if="isDragging" class="drop-overlay">
-                  <div class="drop-overlay-content">
-                    <Upload :size="48" />
-                    <p>Thả ảnh vào đây để thay đổi</p>
-                  </div>
-                </div>
-
-                <div class="vision-main card glass">
-                  <div class="hud-container analysis-container">
-                    <img :src="uploadedImage" class="analyzed-img" ref="analyzedImgRef">
-                    <div v-if="analysisResults" class="face-overlay">
-                      <div v-for="face in analysisResults.faces" :key="face.face_id" class="face-box" 
-                           :style="{ top: face.bounding_box.top + 'px', left: face.bounding_box.left + 'px', width: face.bounding_box.width + 'px', height: face.bounding_box.height + 'px' }">
-                        <div class="face-label">{{ face.emotion }} ({{ Math.round(face.confidence * 100) }}%)</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="vision-sidebar">
-                  <div class="sidebar-card card glass" v-if="analysisResults">
-                    <h3>Face Summary</h3>
-                    <div class="face-summary-list">
-                      <div v-for="face in analysisResults.faces" :key="face.face_id" class="face-summary-item">
-                        <div class="face-id">Face #{{ face.face_id + 1 }}</div>
-                        <div class="face-res"><strong>{{ face.emotion }}</strong> - {{ Math.round(face.confidence * 100) }}%</div>
-                      </div>
-                    </div>
-                  </div>
-                  <button class="btn btn-outline w-full" @click="uploadedImage = null; analysisResults = null">Tải ảnh khác</button>
-                </div>
-              </div>
-            </section>
-
-            <!-- GUIDE TAB -->
-            <section v-else-if="currentTab === 'guide'" class="service-page">
-              <div class="page-header">
-                <div>
-                  <h2 class="page-title">Hướng dẫn sử dụng</h2>
-                  <p class="page-subtitle">Tìm hiểu cách thức hoạt động và sử dụng hệ thống EmotionAI.</p>
-                </div>
-              </div>
-              <div class="guide-grid">
-                <div class="card glass p-8">
-                  <h3>1. Webcam thời gian thực</h3>
-                  <p>Mở tab Webcam, nhấn "Kích hoạt" và AI sẽ tự động khoanh vùng khuôn mặt bạn để nhận diện cảm xúc mỗi giây.</p>
-                </div>
-                <div class="card glass p-8">
-                  <h3>2. Phân tích ảnh tĩnh</h3>
-                  <p>Bạn có thể kéo thả tệp, chọn từ máy hoặc đơn giản là nhấn **Ctrl+V** để dán ảnh đã copy vào tab Upload.</p>
-                </div>
-                <div class="card glass p-8">
-                  <h3>3. Phân tích Video</h3>
-                  <p>Tải lên video của bạn, hệ thống sẽ phân tích từng khung hình trong lúc video đang phát.</p>
+                    <h3>K├⌐o thß║ú ß║únh v├áo ─æ├óy</h3>
+                    <p>Hß╗ù trß╗ú ─æß╗ïnh dß║íng JPG, PNG, WEBP (Tß╗æi ─æa 5MB)</p>
+                    <button class="btn btn-outline mt-8">Chß╗ìn tß╗½ m├íy t├¡nh</button>
                 </div>
               </div>
             </section>
@@ -575,7 +388,7 @@ onUnmounted(() => {
               <div class="page-header">
                 <div>
                   <h2 class="page-title">Analytics Dashboard</h2>
-                  <p class="page-subtitle">Tổng quan hiệu năng và dữ liệu nhận diện của hệ thống.</p>
+                  <p class="page-subtitle">Tß╗òng quan hiß╗çu n─âng v├á dß╗» liß╗çu nhß║¡n diß╗çn cß╗ºa hß╗ç thß╗æng.</p>
                 </div>
               </div>
 
@@ -599,7 +412,7 @@ onUnmounted(() => {
                 </div>
                 <div class="chart-placeholder">
                     <BarChart3 :size="48" class="faint-icon" />
-                    <p>Dữ liệu đang được tổng hợp...</p>
+                    <p>Dß╗» liß╗çu ─æang ─æ╞░ß╗úc tß╗òng hß╗úp...</p>
                 </div>
               </div>
             </section>
@@ -611,7 +424,7 @@ onUnmounted(() => {
 
     <footer class="footer">
       <div class="container">
-        <p>© 2026 EmotionAI Project. Built for high-performance AI monitoring.</p>
+        <p>┬⌐ 2026 EmotionAI Project. Built for high-performance AI monitoring.</p>
       </div>
     </footer>
   </div>
@@ -1404,158 +1217,6 @@ onUnmounted(() => {
 }
 
 .w-full { width: 100%; }
-
-.upload-container {
-  padding: 4rem 2rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px dashed transparent;
-  border-radius: 20px;
-}
-
-.upload-container.dragging, .vision-grid.dragging {
-  border-color: var(--primary);
-  background: rgba(var(--primary-rgb), 0.15);
-  transform: scale(1.01);
-  box-shadow: 0 0 40px rgba(var(--primary-rgb), 0.4), inset 0 0 30px rgba(var(--primary-rgb), 0.2);
-  animation: pulse-glow 1.5s infinite;
-}
-
-.dragging * {
-  pointer-events: none !important;
-}
-
-.upload-container:not(.dragging) .drop-zone, 
-.upload-container:not(.dragging) .drop-overlay-content {
-  pointer-events: auto;
-}
-
-.relative-container {
-  position: relative;
-}
-
-.drop-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(var(--primary-rgb), 0.15);
-  backdrop-filter: blur(8px);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px dashed var(--primary);
-  border-radius: 20px;
-  box-shadow: inset 0 0 50px rgba(var(--primary-rgb), 0.4);
-  pointer-events: none;
-  animation: fadeIn 0.3s ease;
-}
-
-.drop-overlay-content {
-  text-align: center;
-  color: var(--primary);
-  font-weight: 700;
-}
-
-.drop-overlay-content p {
-  margin-top: 1rem;
-  font-size: 1.2rem;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes pulse-glow {
-  0% { box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3); }
-  50% { box-shadow: 0 0 50px rgba(var(--primary-rgb), 0.6); }
-  100% { box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3); }
-}
-
-.webcam-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
-}
-
-.analysis-container {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-.analyzed-img {
-  max-width: 100%;
-  max-height: 600px;
-  border-radius: 8px;
-}
-
-.face-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.face-box {
-  position: absolute;
-  border: 2px solid var(--primary);
-  border-radius: 4px;
-  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.5);
-  transition: all 0.3s ease;
-}
-
-.face-label {
-  position: absolute;
-  top: -25px;
-  left: -2px;
-  background: var(--primary);
-  color: white;
-  padding: 2px 8px;
-  font-size: 0.75rem;
-  font-weight: bold;
-  border-radius: 4px 4px 0 0;
-  white-space: nowrap;
-}
-
-.face-summary-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-
-[data-theme='dark'] .face-summary-item {
-  border-bottom-color: rgba(255,255,255,0.05);
-}
-
-.guide-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-.guide-grid h3 {
-  color: var(--primary);
-  margin-bottom: 1rem;
-}
-
-.guide-grid p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.p-8 { padding: 2rem; }
 
 /* Transitions */
 .fade-enter-active, .fade-leave-active {
