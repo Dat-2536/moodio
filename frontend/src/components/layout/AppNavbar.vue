@@ -2,7 +2,9 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
-  Home, Camera, Upload, BrainCircuit, BarChart3, Sun, Moon, Github, Menu, X 
+  Home, Camera, Upload, BrainCircuit, BarChart3, Sun, Moon, Github, Menu, X, 
+  ScanEye,
+  ScanFace
 } from 'lucide-vue-next'
 import { useTheme } from '@/composables/useTheme'
 
@@ -30,7 +32,7 @@ onUnmounted(() => {
     <div class="container nav-content">
       <RouterLink to="/" class="logo">
         <div class="logo-icon"></div>
-        <span class="logo-text">EMOTION<span class="highlight">AI</span></span>
+        <span class="logo-text">MOODIO<span class="highlight">AI</span></span>
       </RouterLink>
 
       <div class="nav-links">
@@ -44,7 +46,7 @@ onUnmounted(() => {
           <Upload :size="18" /> Image
         </RouterLink>
         <RouterLink to="/visualize" class="nav-item" active-class="active">
-          <BrainCircuit :size="18" /> Visualize
+          <ScanFace :size="18" /> Visualize
         </RouterLink>
         <RouterLink to="/stats" class="nav-item" active-class="active">
           <BarChart3 :size="18" /> Stats
