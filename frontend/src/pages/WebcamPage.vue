@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Camera } from 'lucide-vue-next'
+import { Camera, ScanFace, Smile, Frown } from 'lucide-vue-next'
 import PageHeader from '@/components/common/PageHeader.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import StatusPill from '@/components/common/StatusPill.vue'
@@ -20,14 +20,14 @@ const handleStart = () => {
 <template>
   <section class="service-page">
     <PageHeader 
-      title="Live Vision Analysis" 
-      subtitle="Nhận diện thời gian thực đa khuôn mặt qua luồng camera của bạn."
+      title="Moodio Live Analysis" 
+      subtitle="Nhận diện cảm xúc thời gian thực sử dụng ResNet-18 qua Camera."
     >
       <template #right>
         <StatusPill 
           v-if="isWebcamActive" 
           :active="true" 
-          text="AI Multi-Face Engine Running" 
+          text="ResNet-18 Engine Active" 
         />
       </template>
     </PageHeader>
@@ -58,15 +58,21 @@ const handleStart = () => {
             >
               <div class="face-box-border"></div>
               <div class="face-emotion-tag">
+                <Smile v-if="['happy', 'surprise'].includes(face.emotion.toLowerCase())" :size="14" />
+                <Frown v-else-if="['sad', 'angry', 'fear', 'disgust'].includes(face.emotion.toLowerCase())" :size="14" />
+                <ScanFace v-else :size="14" />
                 <span class="emo-text">{{ face.emotion }}</span>
-                <span class="conf-text">{{ Math.round(face.confidence * 100) }}%</span>
+                <span class="conf-text">{{ face.confidence }}%</span>
               </div>
             </div>
           </div>
 
           <div v-if="!isWebcamActive" class="camera-placeholder">
-            <Camera :size="64" class="faint-icon" />
-            <p>Vui lòng kích hoạt camera để bắt đầu</p>
+            <div class="icon-stack">
+              <ScanFace :size="64" class="faint-icon" />
+              <Camera :size="32" class="overlay-icon" />
+            </div>
+            <p>Sẵn sàng kết nối với trí tuệ nhân tạo Moodio</p>
             <AppButton class="mt-6" @click="handleStart">
               Kích hoạt Camera
             </AppButton>
@@ -78,20 +84,24 @@ const handleStart = () => {
 
       <div class="vision-sidebar">
         <div class="sidebar-header">
-          <h3>Detected Emotions</h3>
-          <p>{{ detectedFaces.length }} faces detected</p>
+          <div class="flex items-center justify-between">
+             <h3>Detected Emotions</h3>
+             <StatusPill v-if="isWebcamActive" :active="true" :text="detectedFaces.length + ' Face'" />
+          </div>
         </div>
 
         <div class="results-list">
           <EmotionResultCard 
             v-for="face in detectedFaces"
             :key="'list-' + face.face_id"
-            :title="'Face #' + (face.face_id + 1)"
+            :title="'Face Analysis'"
             :emotion="face.emotion"
             :confidence="face.confidence"
+            :all-probs="face.all_probs"
           />
           
           <div v-if="detectedFaces.length === 0 && isWebcamActive" class="empty-state">
+            <ScanFace :size="32" class="mb-4 opacity-20" />
             Searching for faces...
           </div>
         </div>

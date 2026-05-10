@@ -1,8 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
-import { Upload } from 'lucide-vue-next'
+import { Upload, ScanFace, Smile, Frown } from 'lucide-vue-next'
 import PageHeader from '@/components/common/PageHeader.vue'
-import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import UploadBox from '@/components/common/UploadBox.vue'
 import VisionFrame from '@/components/vision/VisionFrame.vue'
@@ -48,8 +47,8 @@ onUnmounted(() => {
 <template>
   <section class="service-page">
     <PageHeader 
-      title="Image Analysis" 
-      subtitle="Tải ảnh lên hoặc Ctrl+V để phân tích biểu cảm chi tiết."
+      title="Moodio Image Analysis" 
+      subtitle="Tải ảnh lên hoặc Ctrl+V để phân tích biểu cảm với ResNet-18."
     />
 
     <div v-if="!uploadedImage">
@@ -83,30 +82,32 @@ onUnmounted(() => {
         <div v-if="analysisResults" class="face-overlay">
           <div v-for="face in analysisResults.faces" :key="face.face_id" class="face-box" 
                 :style="{ 
-                  top: face.bounding_box.top + 'px', 
-                  left: face.bounding_box.left + 'px', 
-                  width: face.bounding_box.width + 'px', 
-                  height: face.bounding_box.height + 'px' 
+                  top: face.bounding_box.top + '%', 
+                  left: face.bounding_box.left + '%', 
+                  width: face.bounding_box.width + '%', 
+                  height: face.bounding_box.height + '%' 
                 }">
             <div class="face-label">
-              {{ face.emotion }} ({{ Math.round(face.confidence * 100) }}%)
+              <Smile v-if="['happy', 'surprise'].includes(face.emotion.toLowerCase())" :size="12" />
+              <Frown v-else-if="['sad', 'angry', 'fear', 'disgust'].includes(face.emotion.toLowerCase())" :size="12" />
+              <ScanFace v-else :size="12" />
+              {{ face.emotion }} ({{ face.confidence }}%)
             </div>
           </div>
         </div>
       </VisionFrame>
 
       <div class="vision-sidebar">
-        <AppCard class="sidebar-card" v-if="analysisResults">
-          <h3>Face Summary</h3>
-          <div class="face-summary-list">
-            <div v-for="face in analysisResults.faces" :key="face.face_id" class="face-summary-item">
-              <div class="face-id">Face #{{ face.face_id + 1 }}</div>
-              <div class="face-res">
-                <strong>{{ face.emotion }}</strong> - {{ Math.round(face.confidence * 100) }}%
-              </div>
-            </div>
-          </div>
-        </AppCard>
+        <div v-if="analysisResults" class="results-list">
+          <EmotionResultCard 
+            v-for="face in analysisResults.faces"
+            :key="face.face_id"
+            title="Detailed Analysis"
+            :emotion="face.emotion"
+            :confidence="face.confidence"
+            :all-probs="face.all_probs"
+          />
+        </div>
         
         <EmotionResultCard 
           v-else
@@ -114,7 +115,10 @@ onUnmounted(() => {
           :emotion="null"
         >
           <template #placeholder>
-            {{ isAnalyzing ? 'Đang phân tích hình ảnh...' : 'Sẵn sàng phân tích' }}
+            <div class="flex flex-col items-center gap-4">
+              <ScanFace :size="32" :class="{ 'animate-pulse': isAnalyzing }" />
+              {{ isAnalyzing ? 'Moodio đang phân tích...' : 'Sẵn sàng phân tích' }}
+            </div>
           </template>
         </EmotionResultCard>
 

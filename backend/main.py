@@ -1,15 +1,18 @@
 import uvicorn
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-import cv2
-import numpy as np
 import io
+import os
+import sys
 from PIL import Image
-import random
 
-app = FastAPI(title="Emotion Recognition AI")
+# Thêm đường dẫn tới thư mục ai để import inference
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from ai.inference import load_model, predict
 
-# Cho phép CORS cho frontend VueJS
+app = FastAPI(title="Moodio AI - Emotion Recognition")
+
+# Cấu hình CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,71 +21,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-EMOTIONS = ["Happy", "Sad", "Angry", "Surprised", "Neutral", "Disgusted", "Fearful"]
+# Load model khi khởi động
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '../ai/best_model_final.pth')
+model = load_model(MODEL_PATH)
 
 @app.get("/")
 async def root():
-    return {"message": "Emotion Recognition API is running"}
+    return {"message": "Moodio AI API is running"}
 
 @app.post("/analyze-image")
 async def analyze_image(file: UploadFile = File(...)):
     """
-    Phân tích cảm xúc từ ảnh upload lên.
+    Phân tích cảm xúc từ ảnh upload lên sử dụng mô hình ResNet-18 thực tế.
     """
     contents = await file.read()
     image = Image.open(io.BytesIO(contents))
     
-    # Mock kết quả nhận diện (Giả lập ResNet50 xử lý)
-    # Trong thực tế, bạn sẽ đưa image qua model.forward() ở đây
-    num_faces = random.randint(1, 3)
-    results = []
+    # Thực hiện dự đoán
+    prediction = predict(model, image)
     
-    for i in range(num_faces):
-        results.append({
-            "face_id": i,
-            "emotion": random.choice(EMOTIONS),
-            "confidence": round(random.uniform(0.7, 0.99), 2),
-            "bounding_box": {
-                "top": random.randint(50, 100),
-                "left": random.randint(50, 100),
-                "width": random.randint(100, 200),
-                "height": random.randint(100, 200)
-            }
-        })
-    
+    # Ở phiên bản này, chúng ta giả định ảnh upload là một khuôn mặt tập trung
+    # Trong tương lai có thể thêm Face Detection (MTCNN) ở đây
     return {
         "status": "success",
-        "faces": results
+        "faces": [
+            {
+                "face_id": 0,
+                "emotion": prediction['emotion'],
+                "confidence": prediction['confidence'],
+                "all_probs": prediction['all_probs'],
+                "bounding_box": {
+                    "top": 10, "left": 10, "width": 80, "height": 80
+                }
+            }
+        ]
     }
 
 @app.post("/stream-frame")
 async def stream_frame(file: UploadFile = File(...)):
     """
-    Xử lý frame từ Webcam thời gian thực, hỗ trợ nhiều khuôn mặt.
+    Xử lý frame từ Webcam thời gian thực.
     """
     contents = await file.read()
-    # Trong thực tế: convert bytes sang opencv mat, chạy model detection & recognition
+    image = Image.open(io.BytesIO(contents))
     
-    # Mock đa khuôn mặt để demo frontend
-    num_faces = random.randint(1, 2)
-    faces = []
-    
-    for i in range(num_faces):
-        faces.append({
-            "face_id": i,
-            "emotion": random.choice(EMOTIONS),
-            "confidence": round(random.uniform(0.75, 0.98), 2),
-            "bounding_box": {
-                "top": random.randint(20, 40) + (i * 10),
-                "left": random.randint(20, 40) + (i * 30),
-                "width": 30, # % của frame
-                "height": 40 # % của frame
-            }
-        })
+    # Thực hiện dự đoán
+    prediction = predict(model, image)
     
     return {
         "status": "success",
-        "faces": faces
+        "faces": [
+            {
+                "face_id": 0,
+                "emotion": prediction['emotion'],
+                "confidence": prediction['confidence'],
+                "all_probs": prediction['all_probs'],
+                "bounding_box": {
+                    "top": 20, "left": 30, "width": 40, "height": 50
+                }
+            }
+        ]
     }
 
 if __name__ == "__main__":
