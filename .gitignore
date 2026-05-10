@@ -34,6 +34,13 @@ Thumbs.db
 
 # spec
 spec/
-skills/
 
+# backup
 old_app.vue
+
+# skills
+skills/
+frontend-review
+docs/
+
+
