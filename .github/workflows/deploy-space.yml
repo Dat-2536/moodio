@@ -1,0 +1,38 @@
+name: Deploy Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "space/**"
+      - ".github/workflows/deploy-space.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-space:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitHub repo
+        uses: actions/checkout@v4
+
+      - name: Prepare Space files
+        run: |
+          rm -rf hf-space
+          mkdir hf-space
+          rsync -av --delete space/ hf-space/
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd hf-space
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git add .
+          git commit -m "Deploy Space from GitHub Actions" || echo "No changes to commit"
+          git branch -M main
+          git remote add origin https://user:${HF_TOKEN}@huggingface.co/spaces/dat-2536/moodio-backend
+          git push --force origin main
