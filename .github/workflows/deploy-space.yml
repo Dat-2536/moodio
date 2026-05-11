@@ -35,7 +35,7 @@ jobs:
           test -f space/Dockerfile
           test -f space/requirements.txt
           test -f space/README.md
-          test -f space/inference.py
+          test -f space/emotion_inference.py
           test -f space/model/labels.json
           test -f space/model/preprocess.json
           test -f space/model/best_model_final.pth
