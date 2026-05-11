@@ -82,6 +82,6 @@ jobs:
           git add .gitattributes .
           git commit -m "Deploy Space from GitHub Actions" || echo "No changes to commit"
 
-          git branch -M master
+          git branch -M main
           git remote add origin https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}
-          git push --force origin master
+          git push --force origin main
