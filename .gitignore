@@ -32,6 +32,10 @@ pnpm-debug.log*
 Thumbs.db
 .vercel
 
+# python
+__pycache__/
+*/__pycache__/
+
 # spec
 spec/
 

@@ -286,7 +286,7 @@ onMounted(() => {
 
 .logo-text {
   font-weight: 800;
-  font-size: 5rem;
+  font-size: 1.5em;
   letter-spacing: -1px;
 }
 
