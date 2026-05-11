@@ -54,6 +54,16 @@ async def startup_event():
     except Exception as e:
         print(f"Error loading model: {e}")
 
+@app.get("/")
+def root():
+    return {
+        "name": "Moodio Emotion AI Backend",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health",
+        "model_info": "/model-info"
+    }
+    
 @app.get("/health")
 async def health():
     return {"status": "ok"}
