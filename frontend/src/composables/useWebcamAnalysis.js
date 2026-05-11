@@ -1,8 +1,13 @@
 import { ref, onUnmounted } from 'vue'
 import { normalizeFaceResults } from '@/utils/faceUtils'
-import { API_BASE } from '@/api/config'
+import { API_BASE_URL } from '@/constants/api'
+import { saveLocalLog } from '@/utils/localStats'
 
-export const WEBCAM_INFERENCE_INTERVAL_MS = 500
+export const WEBCAM_INTERVAL_MODES = {
+  ECO: 3000,
+  NORMAL: 2000,
+  FAST: 1000
+}
 
 export function useWebcamAnalysis() {
   const webcamStream = ref(null)
@@ -11,8 +16,9 @@ export function useWebcamAnalysis() {
   const detectedFaces = ref([])
   const webcamInterval = ref(null)
   const videoSize = ref({ width: 0, height: 0 })
+  let lastLogTime = 0
 
-  const startWebcam = async (videoRef, canvasRef) => {
+  const startWebcam = async (videoRef, canvasRef, intervalMs = WEBCAM_INTERVAL_MODES.NORMAL) => {
     try {
       webcamStream.value = await navigator.mediaDevices.getUserMedia({ 
         video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
@@ -40,6 +46,7 @@ export function useWebcamAnalysis() {
 
         isProcessingFrame.value = true
         
+        const startTime = performance.now()
         try {
           const canvas = canvasRef.value
           canvas.width = video.videoWidth
@@ -53,18 +60,33 @@ export function useWebcamAnalysis() {
           const formData = new FormData()
           formData.append('file', blob, 'webcam.jpg')
           
-          const res = await fetch(`${API_BASE}/stream-frame`, { 
+          const res = await fetch(`${API_BASE_URL}/analyze-image`, { 
             method: 'POST', 
             body: formData 
           })
           const data = await res.json()
-          detectedFaces.value = normalizeFaceResults(data)
+          
+          const results = normalizeFaceResults(data)
+          detectedFaces.value = results
+
+          // Log to local stats (throttled to once per 5 seconds for webcam)
+          const now = Date.now()
+          if (results.length > 0 && now - lastLogTime > 5000) {
+            saveLocalLog({
+              source: 'webcam',
+              detectedFaces: results.length,
+              topEmotion: results[0].emotion,
+              confidence: results[0].confidence,
+              latencyMs: performance.now() - startTime
+            })
+            lastLogTime = now
+          }
         } catch (err) { 
           console.error('Webcam frame analysis error:', err) 
         } finally {
           isProcessingFrame.value = false
         }
-      }, WEBCAM_INFERENCE_INTERVAL_MS)
+      }, intervalMs)
     } catch (err) {
       console.error("Webcam access denied:", err)
       alert("Vui lòng cho phép truy cập camera để sử dụng tính năng này.")

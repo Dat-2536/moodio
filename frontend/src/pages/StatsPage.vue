@@ -5,7 +5,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 
-import { API_BASE } from '@/api/config'
+import { computeLocalStats, clearLocalLogs } from '@/utils/localStats'
 
 const selectedRange = ref('week')
 const isLoading = ref(true)
@@ -22,14 +22,24 @@ const fetchStats = async () => {
   isLoading.value = true
   connectionError.value = false
   try {
-    const response = await fetch(`${API_BASE}/stats/dashboard?range=${selectedRange.value}`)
-    if (!response.ok) throw new Error('API Error')
-    dashboardData.value = await response.json()
+    // Simulate slight delay for UI feedback
+    await new Promise(r => setTimeout(r, 400))
+    
+    const days = selectedRange.value === 'week' ? 7 : 30
+    const stats = computeLocalStats(days)
+    dashboardData.value = stats
   } catch (err) {
     connectionError.value = true
-    console.warn('Could not fetch real-time stats, using local defaults.')
+    console.error('Failed to compute local stats:', err)
   } finally {
     isLoading.value = false
+  }
+}
+
+const handleClearStats = () => {
+  if (confirm('Bạn có chắc chắn muốn xoá tất cả lịch sử nhận diện local không?')) {
+    clearLocalLogs()
+    fetchStats()
   }
 }
 
@@ -75,15 +85,20 @@ const statsCards = computed(() => [
   <section class="service-page">
     <PageHeader 
       title="Analytics Dashboard" 
-      subtitle="Thống kê hiệu năng thực tế của hệ thống nhận diện cảm xúc Moodio."
+      subtitle="Thống kê hiệu năng dựa trên lịch sử nhận diện được lưu trữ cục bộ (Local Browser Analytics)."
     >
       <template #right>
-        <div v-if="connectionError" class="connection-warning glass">
-           <AlertCircle :size="14" />
-           <span>Offline Mode</span>
-           <button @click="fetchStats" class="sync-btn" title="Sync Data">
-              <RefreshCw :size="12" :class="{ 'spin': isLoading }" />
-           </button>
+        <div class="flex gap-4 items-center">
+           <AppButton variant="outline" size="sm" @click="handleClearStats">
+              Reset History
+           </AppButton>
+           <div v-if="connectionError" class="connection-warning glass">
+              <AlertCircle :size="14" />
+              <span>Offline Mode</span>
+              <button @click="fetchStats" class="sync-btn" title="Sync Data">
+                 <RefreshCw :size="12" :class="{ 'spin': isLoading }" />
+              </button>
+           </div>
         </div>
       </template>
     </PageHeader>

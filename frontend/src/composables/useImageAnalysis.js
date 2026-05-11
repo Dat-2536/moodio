@@ -1,6 +1,7 @@
 import { ref, onUnmounted } from 'vue'
 import { normalizeFaceResults } from '@/utils/faceUtils'
-import { API_BASE } from '@/api/config'
+import { API_BASE_URL } from '@/constants/api'
+import { saveLocalLog } from '@/utils/localStats'
 
 export function useImageAnalysis() {
   const analysisResults = ref([])
@@ -30,13 +31,27 @@ export function useImageAnalysis() {
     const formData = new FormData()
     formData.append('file', file)
     
+    const startTime = performance.now()
     try {
-      const res = await fetch(`${API_BASE}/analyze-image`, { 
+      const res = await fetch(`${API_BASE_URL}/analyze-image`, { 
         method: 'POST', 
         body: formData 
       })
       const data = await res.json()
-      analysisResults.value = normalizeFaceResults(data)
+      
+      const results = normalizeFaceResults(data)
+      analysisResults.value = results
+      
+      // Log to local stats
+      if (results.length > 0) {
+        saveLocalLog({
+          source: 'image',
+          detectedFaces: results.length,
+          topEmotion: results[0].emotion,
+          confidence: results[0].confidence,
+          latencyMs: performance.now() - startTime
+        })
+      }
     } catch (err) { 
       console.error('Image analysis error:', err) 
     } finally {

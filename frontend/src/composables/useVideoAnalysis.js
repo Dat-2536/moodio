@@ -1,6 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { normalizeFaceResults } from '@/utils/faceUtils'
-import { API_BASE } from '@/api/config'
+import { API_BASE_URL } from '@/constants/api'
 
 export function useVideoAnalysis() {
   const videoUrl = ref('')
@@ -38,7 +38,7 @@ export function useVideoAnalysis() {
         formData.append('file', blob, 'frame.jpg')
         
         try {
-          const response = await fetch(`${API_BASE}/stream-frame`, {
+          const response = await fetch(`${API_BASE_URL}/stream-frame`, {
             method: 'POST',
             body: formData
           })

@@ -4,7 +4,7 @@ import {
   EMOTION_DISPLAY_NAMES, 
   EMOTION_COLORS 
 } from '@/constants/emotions'
-import { API_BASE } from '@/api/config'
+import { API_BASE_URL } from '@/constants/api'
 
 export function useRecognitionSimulation() {
   const steps = [
@@ -182,7 +182,7 @@ export function useRecognitionSimulation() {
     const formData = new FormData()
     formData.append('file', file)
     try {
-      const res = await fetch(`${API_BASE}/analyze-image`, { method: 'POST', body: formData })
+      const res = await fetch(`${API_BASE_URL}/analyze-image`, { method: 'POST', body: formData })
       const data = await res.json()
       if (data && data.faces && data.faces.length > 0) {
         const primaryEmotion = data.faces[0].emotion

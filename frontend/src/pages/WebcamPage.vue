@@ -7,14 +7,23 @@ import StatusPill from '@/components/common/StatusPill.vue'
 import VisionFrame from '@/components/vision/VisionFrame.vue'
 import FaceOverlay from '@/components/vision/FaceOverlay.vue'
 import FaceResultList from '@/components/vision/FaceResultList.vue'
-import { useWebcamAnalysis, WEBCAM_INFERENCE_INTERVAL_MS } from '@/composables/useWebcamAnalysis'
+import { useWebcamAnalysis, WEBCAM_INTERVAL_MODES } from '@/composables/useWebcamAnalysis'
 
 const videoRef = ref(null)
 const canvasRef = ref(null)
+const selectedInterval = ref(WEBCAM_INTERVAL_MODES.NORMAL)
 const { isWebcamActive, isProcessingFrame, detectedFaces, videoSize, startWebcam, stopWebcam } = useWebcamAnalysis()
 
 const handleStart = () => {
-  startWebcam(videoRef, canvasRef)
+  startWebcam(videoRef, canvasRef, selectedInterval.value)
+}
+
+const changeInterval = (val) => {
+  selectedInterval.value = val
+  if (isWebcamActive.value) {
+    stopWebcam()
+    handleStart()
+  }
 }
 </script>
 
@@ -29,7 +38,7 @@ const handleStart = () => {
           <StatusPill 
             v-if="isWebcamActive" 
             :active="true" 
-            :text="`Inference: ${WEBCAM_INFERENCE_INTERVAL_MS}ms`" 
+            :text="`Interval: ${selectedInterval}ms`" 
             class="hidden md:flex"
           />
           <StatusPill 
@@ -72,6 +81,10 @@ const handleStart = () => {
             
             <canvas ref="canvasRef" style="display: none;"></canvas>
           </VisionFrame>
+          
+          <div v-if="isWebcamActive" class="cloud-note mt-4 glass p-4 text-xs">
+            <p><strong>Cloud Demo Mode:</strong> Hệ thống đang phân tích một frame mỗi {{ selectedInterval/1000 }} giây để tối ưu hoá tài nguyên CPU Free Tier.</p>
+          </div>
         </div>
 
         <div class="vision-sidebar card glass p-6">
@@ -83,6 +96,21 @@ const handleStart = () => {
                     {{ detectedFaces.length }} FACES
                   </span>
                 </div>
+             </div>
+          </div>
+
+          <div class="interval-selector mb-8">
+             <h4 class="text-[10px] font-bold uppercase tracking-widest text-primary mb-3">Inference Speed</h4>
+             <div class="flex gap-2">
+                <button 
+                  v-for="(val, key) in WEBCAM_INTERVAL_MODES" 
+                  :key="key"
+                  class="speed-btn"
+                  :class="{ active: selectedInterval === val }"
+                  @click="changeInterval(val)"
+                >
+                  {{ key }}
+                </button>
              </div>
           </div>
 
@@ -124,5 +152,32 @@ const handleStart = () => {
   margin-bottom: 1rem; 
 }
 
+.speed-btn {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.speed-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+
+.cloud-note {
+  border-left: 3px solid var(--primary);
+  color: var(--text-secondary);
+}
+
+.mt-4 { margin-top: 1rem; }
 .mt-6 { margin-top: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
 </style>

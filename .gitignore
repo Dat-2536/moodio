@@ -39,9 +39,6 @@ __pycache__/
 # spec
 spec/
 
-# backup
-old_app.vue
-
 # skills
 skills/
 frontend-review
