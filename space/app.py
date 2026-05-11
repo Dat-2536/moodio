@@ -9,7 +9,7 @@ import torch
 import numpy as np
 
 # Import existing inference logic
-from inference import load_model, predict
+from emotion_inference import load_model, predict
 
 app = FastAPI(title="Emotion AI Backend - Hugging Face Space")
 
