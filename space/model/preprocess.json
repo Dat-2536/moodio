@@ -1,0 +1,5 @@
+{
+  "input_size": [224, 224],
+  "color_mode": "grayscale_to_rgb",
+  "normalize": "imagenet"
+}
