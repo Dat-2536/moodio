@@ -3,7 +3,7 @@ name: Deploy Hugging Face Space
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - "space/**"
       - ".github/workflows/deploy-space.yml"
@@ -13,26 +13,75 @@ jobs:
   deploy-space:
     runs-on: ubuntu-latest
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      HF_SPACE_REPO: dat-2536/moodio-backend
+
     steps:
-      - name: Checkout GitHub repo
+      - name: Checkout GitHub repo with LFS
         uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Pull Git LFS files
+        run: |
+          git lfs install
+          git lfs pull
+
+      - name: Validate Space files
+        run: |
+          test -d space
+          test -f space/app.py
+          test -f space/Dockerfile
+          test -f space/requirements.txt
+          test -f space/README.md
+          test -f space/inference.py
+          test -f space/model/labels.json
+          test -f space/model/preprocess.json
+          test -f space/model/best_model_final.pth
+
+          echo "Checking model file size..."
+          MODEL_SIZE=$(wc -c < space/model/best_model_final.pth)
+          echo "Model size: ${MODEL_SIZE} bytes"
+          if [ "$MODEL_SIZE" -lt 1000000 ]; then
+            echo "Model file is too small and may only be a Git LFS pointer. Run git lfs pull locally and push the real LFS object."
+            exit 1
+          fi
+
+          echo "Space folder is valid."
 
       - name: Prepare Space files
         run: |
           rm -rf hf-space
           mkdir hf-space
           rsync -av --delete space/ hf-space/
+          echo "Prepared files:"
+          find hf-space -maxdepth 3 -type f | sort
 
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "HF_TOKEN is missing. Add it in GitHub Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
           cd hf-space
           git init
+          git lfs install
+
           git config user.email "actions@github.com"
           git config user.name "github-actions"
-          git add .
+
+          git lfs track "*.pth"
+          git lfs track "*.pt"
+          git lfs track "*.onnx"
+          git lfs track "*.safetensors"
+
+          git add .gitattributes .
           git commit -m "Deploy Space from GitHub Actions" || echo "No changes to commit"
+
           git branch -M master
-          git remote add origin https://user:${HF_TOKEN}@huggingface.co/spaces/dat-2536/moodio-backend
+          git remote add origin https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}
           git push --force origin master
