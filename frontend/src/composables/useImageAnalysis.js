@@ -28,6 +28,7 @@ export function useImageAnalysis() {
     }
     img.src = uploadedImage.value
 
+    const requestId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
     const formData = new FormData()
     formData.append('file', file)
     
@@ -35,8 +36,24 @@ export function useImageAnalysis() {
     try {
       const res = await fetch(`${API_BASE_URL}/analyze-image`, { 
         method: 'POST', 
-        body: formData 
+        body: formData,
+        headers: {
+          'X-Request-ID': requestId
+        }
       })
+
+      if (!res.ok) {
+        const text = await res.text()
+        console.error('[Moodio] image analyze failed', {
+          requestId,
+          url: `${API_BASE_URL}/analyze-image`,
+          status: res.status,
+          statusText: res.statusText,
+          body: text.slice(0, 500)
+        })
+        throw new Error(`Analyze API failed: ${res.status} ${res.statusText} requestId=${requestId}`)
+      }
+
       const data = await res.json()
       
       const results = normalizeFaceResults(data)
@@ -53,7 +70,7 @@ export function useImageAnalysis() {
         })
       }
     } catch (err) { 
-      console.error('Image analysis error:', err) 
+      console.error(`[Moodio] Image analysis error [${requestId}]:`, err) 
     } finally {
       isAnalyzing.value = false
     }

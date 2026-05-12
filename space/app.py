@@ -2,7 +2,7 @@ import time
 import io
 import json
 import os
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import torch
@@ -73,10 +73,17 @@ async def get_model_info():
     return model_info
 
 @app.post("/analyze-image")
-async def analyze_image(file: UploadFile = File(...)):
+@app.post("/analyze-image/")
+@app.post("/api/analyze-image")
+@app.post("/stream-frame")
+async def analyze_image(request: Request, file: UploadFile = File(...)):
+    request_id = request.headers.get('x-request-id', 'no-request-id')
+    print(f'[analyze-image] start request_id={request_id}')
+    
     start_time = time.perf_counter()
     
     if not model:
+        print(f'[analyze-image] error request_id={request_id} detail="Model not loaded"')
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
@@ -90,30 +97,34 @@ async def analyze_image(file: UploadFile = File(...)):
         
         latency_ms = (time.perf_counter() - start_time) * 1000
         
-        # Format response as requested
-        # Since we don't have a face detector in the base inference, 
-        # we return the result as a single face covering the main area.
+        faces = [
+            {
+                "face_id": 0,
+                "emotion": prediction['emotion'],
+                "confidence": prediction['confidence'], # Match local backend (0-100)
+                "bounding_box": {
+                    "top": 0,
+                    "left": 0,
+                    "width": 100, # Use percentages for full frame if no detector
+                    "height": 100
+                },
+                "all_probs": prediction['all_probs']
+            }
+        ]
+        
+        print(f'[analyze-image] done request_id={request_id} faces={len(faces)} latency_ms={latency_ms:.2f}')
+        
+        # Format response to match working backend contract
         return {
-            "faces": [
-                {
-                    "face_id": 0,
-                    "emotion": prediction['emotion'],
-                    "confidence": prediction['confidence'] / 100.0, # Normalize to 0-1
-                    "bounding_box": {
-                        "x": 0,
-                        "y": 0,
-                        "width": image.width,
-                        "height": image.height
-                    },
-                    "all_probs": prediction['all_probs']
-                }
-            ],
+            "status": "success",
+            "request_id": request_id,
+            "faces": faces,
             "latency_ms": round(latency_ms, 2),
             "source": "huggingface-space"
         }
     except Exception as e:
-        print(f"Prediction error: {e}")
-        return {"faces": [], "error": str(e), "latency_ms": 0}
+        print(f'[analyze-image] error request_id={request_id} detail="{str(e)}"')
+        return {"request_id": request_id, "faces": [], "error": str(e), "latency_ms": 0}
 
 if __name__ == "__main__":
     import uvicorn

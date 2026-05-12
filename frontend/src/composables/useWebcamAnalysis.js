@@ -19,6 +19,11 @@ export function useWebcamAnalysis() {
   let lastLogTime = 0
 
   const startWebcam = async (videoRef, canvasRef, intervalMs = WEBCAM_INTERVAL_MODES.NORMAL) => {
+    if (webcamInterval.value) {
+      console.warn('[Moodio] Webcam analysis interval already exists. Skipping start.')
+      return
+    }
+
     try {
       webcamStream.value = await navigator.mediaDevices.getUserMedia({ 
         video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
@@ -39,14 +44,16 @@ export function useWebcamAnalysis() {
       isWebcamActive.value = true
       
       webcamInterval.value = setInterval(async () => {
-        if (!videoRef.value || !canvasRef.value || isProcessingFrame.value) return
+        if (!isWebcamActive.value || !videoRef.value || !canvasRef.value || isProcessingFrame.value) return
         
         const video = videoRef.value
         if (video.readyState < 2 || video.videoWidth === 0) return
 
         isProcessingFrame.value = true
         
+        const requestId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
         const startTime = performance.now()
+        
         try {
           const canvas = canvasRef.value
           canvas.width = video.videoWidth
@@ -62,8 +69,26 @@ export function useWebcamAnalysis() {
           
           const res = await fetch(`${API_BASE_URL}/analyze-image`, { 
             method: 'POST', 
-            body: formData 
+            body: formData,
+            headers: {
+              'X-Request-ID': requestId
+            }
           })
+
+          if (!res.ok) {
+            const text = await res.text()
+            if (isWebcamActive.value) {
+              console.error('[Moodio] webcam analyze failed', {
+                requestId,
+                url: `${API_BASE_URL}/analyze-image`,
+                status: res.status,
+                statusText: res.statusText,
+                body: text.slice(0, 500)
+              })
+            }
+            throw new Error(`Analyze API failed: ${res.status} ${res.statusText} requestId=${requestId}`)
+          }
+
           const data = await res.json()
           
           const results = normalizeFaceResults(data)
@@ -82,13 +107,15 @@ export function useWebcamAnalysis() {
             lastLogTime = now
           }
         } catch (err) { 
-          console.error('Webcam frame analysis error:', err) 
+          if (isWebcamActive.value) {
+            console.error(`[Moodio] Webcam frame analysis error [${requestId}]:`, err) 
+          }
         } finally {
           isProcessingFrame.value = false
         }
       }, intervalMs)
     } catch (err) {
-      console.error("Webcam access denied:", err)
+      console.error("[Moodio] Webcam access denied:", err)
       alert("Vui lòng cho phép truy cập camera để sử dụng tính năng này.")
     }
   }
@@ -96,14 +123,17 @@ export function useWebcamAnalysis() {
   const stopWebcam = () => {
     isWebcamActive.value = false
     isProcessingFrame.value = false
-    if (webcamStream.value) {
-      webcamStream.value.getTracks().forEach(track => track.stop())
-      webcamStream.value = null
-    }
+    
     if (webcamInterval.value) {
       clearInterval(webcamInterval.value)
       webcamInterval.value = null
     }
+
+    if (webcamStream.value) {
+      webcamStream.value.getTracks().forEach(track => track.stop())
+      webcamStream.value = null
+    }
+    
     detectedFaces.value = []
   }
 

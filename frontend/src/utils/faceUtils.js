@@ -10,7 +10,12 @@
  * @returns {Array} Normalized faces array
  */
 export function normalizeFaceResults(response) {
-  if (!response || response.status !== 'success' || !response.faces) {
+  if (!response || !response.faces) {
+    return []
+  }
+
+  // Handle case where status might be missing or different, but faces are present
+  if (response.status && response.status !== 'success' && response.status !== 'ok') {
     return []
   }
 
@@ -19,6 +24,13 @@ export function normalizeFaceResults(response) {
     const rawConfidence = face.confidence || 0
     const normalizedConfidence = rawConfidence > 1 ? rawConfidence / 100 : rawConfidence
 
+    // Resilient bounding box extraction
+    const bbox = face.bounding_box || {}
+    const left = bbox.left !== undefined ? bbox.left : (bbox.x !== undefined ? bbox.x : 0)
+    const top = bbox.top !== undefined ? bbox.top : (bbox.y !== undefined ? bbox.y : 0)
+    const width = bbox.width !== undefined ? bbox.width : 0
+    const height = bbox.height !== undefined ? bbox.height : 0
+
     return {
       id: face.face_id !== undefined ? face.face_id : index,
       emotion: face.emotion || 'unknown',
@@ -26,10 +38,10 @@ export function normalizeFaceResults(response) {
       all_probs: face.all_probs || {},
       // Keep original bounding box (percentages from backend)
       box: {
-        x: face.bounding_box.left,
-        y: face.bounding_box.top,
-        width: face.bounding_box.width,
-        height: face.bounding_box.height
+        x: left,
+        y: top,
+        width: width,
+        height: height
       },
       raw: face
     }
