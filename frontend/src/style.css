@@ -293,3 +293,8 @@ body {
 .app-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
   background-color: rgba(var(--primary-rgb), 0.4) !important;
 }
+
+.text-xxs {
+  font-size: 10px !important;
+  line-height: 1rem;
+}

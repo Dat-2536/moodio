@@ -112,7 +112,7 @@ const changeInterval = (val) => {
               <div class="flex gap-2">
                 <span
                   v-if="isWebcamActive"
-                  class="px-2 py-1 bg-primary/20 text-primary rounded text-[10px] font-bold"
+                  class="px-2 py-1 bg-primary/20 text-primary rounded text-xxs font-bold"
                 >
                   {{ detectedFaces.length }} FACES
                 </span>
@@ -122,7 +122,7 @@ const changeInterval = (val) => {
 
           <!-- Interval selector -->
           <div class="interval-selector mb-8">
-            <h4 class="text-[10px] font-bold uppercase tracking-widest text-primary mb-3">
+            <h4 class="text-xxs font-bold uppercase tracking-widest text-primary mb-3">
               Inference Speed
             </h4>
             <div class="flex gap-2">
@@ -231,7 +231,6 @@ const changeInterval = (val) => {
 .p-6             { padding: 1.5rem; }
 .text-xs         { font-size: 0.75rem; }
 .text-lg         { font-size: 1.125rem; }
-.text-[10px]     { font-size: 10px; }
 .font-black      { font-weight: 900; }
 .font-bold       { font-weight: 700; }
 .uppercase       { text-transform: uppercase; }

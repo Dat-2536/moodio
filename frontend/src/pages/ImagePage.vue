@@ -113,7 +113,7 @@ onUnmounted(() => {
               <div class="flex gap-2">
                 <span
                   v-if="analysisResults.length > 0"
-                  class="px-2 py-1 bg-primary/20 text-primary rounded text-[10px] font-bold"
+                  class="px-2 py-1 bg-primary/20 text-primary rounded text-xxs font-bold"
                 >
                   {{ analysisResults.length }} DETECTED
                 </span>
@@ -196,7 +196,6 @@ onUnmounted(() => {
 .pb-4            { padding-bottom: 1rem; }
 .p-6             { padding: 1.5rem; }
 .text-lg         { font-size: 1.125rem; }
-.text-[10px]     { font-size: 10px; }
 .font-black      { font-weight: 900; }
 .font-bold       { font-weight: 700; }
 .uppercase       { text-transform: uppercase; }

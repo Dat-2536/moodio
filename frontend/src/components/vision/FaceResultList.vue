@@ -69,7 +69,7 @@ const noFaceText = computed(() =>
         <template #footer>
           <div
             v-if="face.bounding_box"
-            class="box-coords mt-3 pt-3 border-t border-white/10 text-[10px] font-mono opacity-50 flex gap-3 flex-wrap"
+            class="box-coords mt-3 pt-3 border-t border-white/10 text-xxs font-mono opacity-50 flex gap-3 flex-wrap"
           >
             <span>X: {{ Math.round(face.bounding_box.x) }}</span>
             <span>Y: {{ Math.round(face.bounding_box.y) }}</span>
