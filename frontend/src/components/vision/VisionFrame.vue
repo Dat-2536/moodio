@@ -17,9 +17,17 @@ defineProps({
 .vision-main {
   width: 100%;
   aspect-ratio: 16 / 9;
+  min-height: 350px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .vision-main {
+    aspect-ratio: 4 / 3;
+    padding: 0.5rem;
+  }
 }
 
 .hud-container {
@@ -67,5 +75,24 @@ defineProps({
 @keyframes scan {
   0%   { top: 0; }
   100% { top: 100%; }
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 4;
+  pointer-events: none;
+}
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.15), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 </style>

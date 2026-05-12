@@ -186,7 +186,11 @@ body {
 }
 
 @media (max-width: 1100px) {
-  .vision-grid { grid-template-columns: 1fr; }
+  .vision-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .vision-sidebar {
+    width: 100%;
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {

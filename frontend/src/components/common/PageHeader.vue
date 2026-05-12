@@ -31,14 +31,14 @@ defineProps({
 }
 
 .page-title {
-  font-size: clamp(2.2rem, 5vw, 2.8rem);
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
   font-weight: 900;
   margin-bottom: 0.75rem;
   line-height: 1.1;
 }
 
 .page-header.compact .page-title {
-  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-size: clamp(1.5rem, 5vw, 2.4rem);
   margin-bottom: 0.5rem;
 }
 
@@ -63,9 +63,6 @@ defineProps({
   .page-header.compact {
     margin-bottom: 1.5rem;
     gap: 0.75rem;
-  }
-  .page-title {
-    font-size: 2.2rem;
   }
 }
 </style>

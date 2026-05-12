@@ -110,6 +110,12 @@ const noFaceText = computed(() =>
   max-height: calc(100vh - 350px);
 }
 
+@media (max-width: 1100px) {
+  .results-scroll-container {
+    max-height: 400px;
+  }
+}
+
 .status-card,
 .empty-state-card {
   border-radius: 20px;
