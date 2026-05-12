@@ -266,15 +266,20 @@ async def analyze_image(request: Request, file: UploadFile = File(...)):
         try:
             prediction = predict(model, face_crop)
             face_results.append({
-                "face_id":      face_id,
+                "face_id":      int(face_id),
                 "emotion":      prediction["emotion"],
-                # emotion_inference.py returns confidence 0–100; normalize to 0–1
-                "confidence":   round(prediction["confidence"] / 100.0, 4),
-                "all_probs":    {k: round(v / 100.0, 4)
+                # Normalize confidence to 0–1
+                "confidence":   round(float(prediction["confidence"] / 100.0), 4),
+                "all_probs":    {k: round(float(v / 100.0), 4)
                                  for k, v in prediction["all_probs"].items()},
-                # bounding_box in ORIGINAL image pixel coordinates
-                "bounding_box": {"x": x, "y": y, "width": w, "height": h},
-                "bbox":         [x, y, w, h],
+                # Bounding box in ORIGINAL image pixel coordinates
+                # Include multiple naming conventions for maximum compatibility
+                "bounding_box": {
+                    "x": int(x), "y": int(y), 
+                    "width": int(w), "height": int(h),
+                    "left": int(x), "top": int(y)
+                },
+                "bbox":         [int(x), int(y), int(w), int(h)],
             })
         except Exception as e:
             print(f"[Moodio] Inference error face_id={face_id}: {e}")
@@ -286,9 +291,11 @@ async def analyze_image(request: Request, file: UploadFile = File(...)):
         "success":    True,
         "request_id": request_id,
         "source":     "huggingface-space",
-        "image_size": {"width": img_w, "height": img_h},
+        "image_size": {"width": int(img_w), "height": int(img_h)},
+        "imageSize":  {"width": int(img_w), "height": int(img_h)},
         "faces":      face_results,
-        "latency_ms": latency_ms,
+        "detections": face_results,  # Alias for compatibility
+        "latency_ms": float(latency_ms),
         "debug":      debug_info,
     }
 

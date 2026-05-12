@@ -23,7 +23,7 @@ export function normalizeBoundingBox(rawBox) {
 
   if (Array.isArray(rawBox)) {
     if (rawBox.length >= 4) {
-      const [x, y, width, height] = rawBox
+      const [x, y, width, height] = rawBox.map(Number)
       if (width > 0 && height > 0) return { x, y, width, height }
     }
     return null
@@ -42,12 +42,12 @@ export function normalizeBoundingBox(rawBox) {
     }
 
     // Standard / legacy form
-    const x = rawBox.x !== undefined ? rawBox.x : (rawBox.left !== undefined ? rawBox.left : null)
-    const y = rawBox.y !== undefined ? rawBox.y : (rawBox.top !== undefined ? rawBox.top : null)
-    const width = rawBox.width !== undefined ? rawBox.width : null
-    const height = rawBox.height !== undefined ? rawBox.height : null
+    const x = Number(rawBox.x !== undefined ? rawBox.x : (rawBox.left !== undefined ? rawBox.left : null))
+    const y = Number(rawBox.y !== undefined ? rawBox.y : (rawBox.top !== undefined ? rawBox.top : null))
+    const width = Number(rawBox.width !== undefined ? rawBox.width : (rawBox.w !== undefined ? rawBox.w : null))
+    const height = Number(rawBox.height !== undefined ? rawBox.height : (rawBox.h !== undefined ? rawBox.h : null))
 
-    if (x !== null && y !== null && width !== null && height !== null && width > 0 && height > 0) {
+    if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
       return { x, y, width, height }
     }
   }
@@ -116,7 +116,14 @@ export function normalizeDetectionResult(data) {
   })
 
   // image_size from backend (prefer this over frontend-measured size for accuracy)
-  const image_size = data.image_size || null
+  let image_size = data.image_size || data.imageSize || null
+  if (image_size) {
+    image_size = {
+      width: Number(image_size.width || image_size.w),
+      height: Number(image_size.height || image_size.h)
+    }
+    if (isNaN(image_size.width) || isNaN(image_size.height)) image_size = null
+  }
 
   return {
     faces,

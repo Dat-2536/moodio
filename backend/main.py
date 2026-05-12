@@ -192,13 +192,17 @@ def analyze_image_internal(pil_image, source: str, start_time: float):
         try:
             prediction = predict(model, face_crop)
             face_results.append({
-                "face_id": face_id,
+                "face_id": int(face_id),
                 "emotion": prediction['emotion'],
-                # Normalize confidence to 0-1 (predict() returns 0-100)
-                "confidence": round(prediction['confidence'] / 100.0, 4),
-                "all_probs": {k: round(v / 100.0, 4) for k, v in prediction['all_probs'].items()},
-                "bounding_box": {"x": x, "y": y, "width": w, "height": h},
-                "bbox": [x, y, w, h]
+                # Normalize confidence to 0-1
+                "confidence": round(float(prediction['confidence'] / 100.0), 4),
+                "all_probs": {k: round(float(v / 100.0), 4) for k, v in prediction['all_probs'].items()},
+                "bounding_box": {
+                    "x": int(x), "y": int(y), 
+                    "width": int(w), "height": int(h),
+                    "left": int(x), "top": int(y)
+                },
+                "bbox": [int(x), int(y), int(w), int(h)]
             })
         except Exception as e:
             # Skip this face if inference fails, log and continue
@@ -210,9 +214,11 @@ def analyze_image_internal(pil_image, source: str, start_time: float):
         "success": True,
         "request_id": request_id,
         "source": source,
-        "image_size": {"width": img_w, "height": img_h},
+        "image_size": {"width": int(img_w), "height": int(img_h)},
+        "imageSize": {"width": int(img_w), "height": int(img_h)},
         "faces": face_results,
-        "latency_ms": latency_ms,
+        "detections": face_results,
+        "latency_ms": float(latency_ms),
         "debug": debug_info
     }
 
