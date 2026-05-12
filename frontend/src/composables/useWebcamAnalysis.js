@@ -4,7 +4,7 @@ import { API_BASE_URL } from '@/constants/api'
 import { saveLocalLog } from '@/utils/localStats'
 
 export const WEBCAM_INTERVAL_MODES = {
-  ECO:    3000,
+  SLOW:    3000,
   NORMAL: 2000,
   FAST:   1000,
 }

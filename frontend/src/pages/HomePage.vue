@@ -1,20 +1,20 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Cpu, Zap, ShieldCheck, Camera, Image, BarChart3, Brain, Layers, Database, ArrowRight } from 'lucide-vue-next'
+import { Cpu, Zap, ShieldCheck, Camera, Image, BarChart3, Eye, Layers, Database, ArrowRight } from 'lucide-vue-next'
 import AOS from 'aos'
 
 const router = useRouter()
 
 const features = [
   { icon: Cpu, title: 'ResNet18 Model', desc: 'Kiến trúc Deep Learning 18 lớp, tối ưu cho nhận diện biểu cảm khuôn mặt với residual connections.' },
-  { icon: Zap, title: 'Real-time Processing', desc: 'Độ trễ cực thấp (<0.1s) với pipeline tối ưu, đảm bảo trải nghiệm phân tích tức thì.' },
+  { icon: Zap, title: 'Real-time Processing', desc: 'Độ trễ thấp với pipeline tối ưu, đảm bảo trải nghiệm phân tích tức thì.' },
   { icon: ShieldCheck, title: 'Privacy First', desc: 'Xử lý hoàn toàn on-device, không lưu trữ hay truyền tải hình ảnh cá nhân ra ngoài.' }
 ]
 
 const steps = [
   { num: '01', icon: Camera, title: 'Thu thập đầu vào', desc: 'Hệ thống nhận hình ảnh từ Webcam, ảnh upload hoặc video. Dữ liệu được chuẩn hóa về tensor (224×224 Grayscale).', color: '#76b900' },
-  { num: '02', icon: Brain, title: 'Xử lý vùng mặt', desc: 'Hệ thống xác định và trích xuất vùng khuôn mặt (minh hoạ), loại bỏ nhiễu nền để tập trung vào đặc trưng quan trọng.', color: '#00b4d8' },
+  { num: '02', icon: Eye, title: 'Xử lý vùng mặt', desc: 'Hệ thống xác định và trích xuất vùng khuôn mặt (minh hoạ), loại bỏ nhiễu nền để tập trung vào đặc trưng quan trọng.', color: '#00b4d8' },
   { num: '03', icon: Layers, title: 'Trích xuất đặc trưng', desc: 'ResNet18 backbone với 18 lớp Convolution xử lý hình ảnh, học các pattern phức tạp từ cơ bản đến trừu tượng.', color: '#7209b7' },
   { num: '04', icon: BarChart3, title: 'Phân loại cảm xúc', desc: 'Lớp Softmax cuối cùng xuất ra phân phối xác suất trên 7 nhãn cảm xúc. Kết quả được hiển thị trực quan tức thì.', color: '#f72585' }
 ]
@@ -30,7 +30,7 @@ const emotions = [
 ]
 
 const techStack = [
-  { icon: Brain, name: 'ResNet18', detail: 'Deep Learning backbone với 18 lớp tích chập. Pre-trained trên ImageNet, fine-tuned cho FER.' },
+  { icon: Eye, name: 'ResNet18', detail: 'Deep Learning backbone với 18 lớp tích chập. Pre-trained trên ImageNet, fine-tuned cho FER.' },
   { icon: Cpu, name: 'FastAPI + Python', detail: 'Backend hiệu năng cao với async processing. Pipeline AI tối ưu cho tốc độ inference.' },
   { icon: Layers, name: 'Vue 3 + Vite', detail: 'Frontend reactive với Composition API. Vite đảm bảo build time cực nhanh.' },
   { icon: Database, name: 'FER2013 Dataset', detail: '35,887 ảnh khuôn mặt 48×48 pixel. 7 nhãn cảm xúc cơ bản theo chuẩn Ekman.' }
@@ -54,7 +54,8 @@ onMounted(() => {
       </h1>
       <p class="hero-desc" data-aos="fade-up" data-aos-delay="200">
         Ứng dụng AI dựa trên ResNet18, cung cấp khả năng phân tích biểu cảm
-        khuôn mặt với độ chính xác vượt trội trong thời gian thực.
+        khuôn mặt trong thời gian thực. <br/>
+        Dự án thuộc khuôn khổ môn học Nhập môn Trí Tuệ Nhân Tạo tại Trường Đại học Bách khoa - ĐHQG-HCM.
       </p>
       <div class="hero-actions" data-aos="fade-up" data-aos-delay="300">
         <button class="btn btn-primary btn-glow" @click="router.push('/webcam')">Trải nghiệm ngay</button>
@@ -68,8 +69,8 @@ onMounted(() => {
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <div class="stat-num">&lt;0.1s</div>
-          <div class="stat-label">Inference Time</div>
+          <div class="stat-num">&lt;0.2s</div>
+          <div class="stat-label">Inference Time (local)</div>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
@@ -227,7 +228,7 @@ onMounted(() => {
       <div class="cta-card glass">
         <div class="cta-glow"></div>
         <h2>Sẵn sàng trải nghiệm?</h2>
-        <p>Khám phá sức mạnh của AI trong việc hiểu cảm xúc con người. Không cần cài đặt - chạy trực tiếp trên trình duyệt.</p>
+        <p>Khám phá sức mạnh của AI trong việc hiểu cảm xúc con người. Chạy trực tiếp trên trình duyệt mà không cần cài đặt.</p>
         <div class="cta-actions">
           <button class="btn btn-primary btn-glow" @click="router.push('/webcam')">
             <Camera :size="18" /> Bật Webcam
@@ -236,7 +237,7 @@ onMounted(() => {
             <Image :size="18" /> Upload Ảnh
           </button>
           <button class="btn btn-outline" @click="router.push('/visualize')">
-            <Brain :size="18" /> AI Lab
+            <Eye :size="18" /> Visualize AI
           </button>
         </div>
       </div>
@@ -297,7 +298,7 @@ onMounted(() => {
 .hero-desc {
   font-size: 1.2rem;
   color: var(--text-secondary);
-  max-width: 620px;
+  max-width: 1000px;
   margin: 0 auto 2.5rem;
   line-height: 1.7;
 }
@@ -320,7 +321,7 @@ onMounted(() => {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(var(--primary-rgb), 0.1);
   border-radius: 20px;
-  max-width: 720px;
+  max-width: 800px;
   flex-wrap: wrap;
 }
 

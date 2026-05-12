@@ -208,4 +208,16 @@ const {
     padding: 16px;
   }
 }
+
+@media (max-width: 460px) {
+  .visualize-shell {
+    padding: 1.5rem 1rem;
+    gap: 16px;
+  }
+  
+  .visualize-lab-panel {
+    padding: 16px 12px;
+    gap: 16px;
+  }
+}
 </style>

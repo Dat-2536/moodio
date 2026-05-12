@@ -88,7 +88,7 @@ const changeInterval = (val) => {
                 <div class="icon-stack">
                   <ScanFace :size="64" class="faint-icon" />
                 </div>
-                <p>Sẵn sàng kết nối với trí tuệ nhân tạo Moodio</p>
+                <p>Sẵn sàng kết nối với Moodio AI</p>
                 <AppButton class="mt-6" @click="handleStart">
                   Kích hoạt Camera
                 </AppButton>

@@ -83,18 +83,17 @@ const noFaceText = computed(() =>
     <!-- ④ No face detected (only after a completed analysis) -->
     <div
       v-else-if="!isAnalyzing && hasPerformedAnalysis && !errorMessage"
-      class="empty-state-card glass p-8"
+      class="empty-state-card glass p-8 flex flex-col items-center"
     >
-      <ScanFace :size="48" class="mx-auto mb-4 opacity-20" />
+      <ScanFace :size="48" class="mb-4 opacity-20" />
       <p class="text-secondary italic text-sm text-center">{{ noFaceText }}</p>
     </div>
 
     <!-- ⑤ Ready state (no analysis yet, no error) -->
-    <div v-else-if="!isAnalyzing" class="empty-state-card glass p-8">
-      <ScanFace :size="48" class="mx-auto mb-4 opacity-20" />
+    <div v-else-if="!isAnalyzing" class="empty-state-card glass p-8 flex flex-col items-center">
+      <ScanFace :size="48" class="mb-4 opacity-20" />
       <p class="text-secondary italic text-sm text-center">Ready to analyze faces.</p>
     </div>
-
   </div>
 </template>
 

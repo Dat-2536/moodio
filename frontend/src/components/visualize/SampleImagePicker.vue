@@ -159,4 +159,25 @@ const handleFileUpload = (e) => {
     height: 84px;
   }
 }
+
+@media (max-width: 460px) {
+  .sample-grid {
+    gap: 8px;
+    justify-content: center;
+  }
+  .sample-card {
+    width: 70px;
+    height: 76px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+  .sample-preview, .uploaded-preview, .upload-placeholder {
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+  .sample-label {
+    font-size: 10px;
+  }
+}
 </style>

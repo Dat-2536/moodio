@@ -316,4 +316,29 @@ onUnmounted(() => {
     justify-content: center;
   }
 }
+
+@media (max-width: 460px) {
+  .control-row.secondary {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .speed-selector-wrapper {
+    width: 100%;
+  }
+  
+  .speed-toggle-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .mode-toggle {
+    width: 100%;
+  }
+  
+  .mode-option span {
+    font-size: 11px;
+  }
+}
 </style>
