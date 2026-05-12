@@ -34,20 +34,23 @@ PREPROCESS_PATH = "model/preprocess.json"
 # ── Global state ──────────────────────────────────────────────────────────────
 model        = None
 model_info   = {}
-face_cascade = None
+face_cascade_frontal = None
+face_cascade_profile = None
 
 
 @app.on_event("startup")
 async def startup_event():
-    global model, model_info, face_cascade
+    global model, model_info, face_cascade_frontal, face_cascade_profile
 
-    # Load Haar cascade for face detection
-    cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    face_cascade = cv2.CascadeClassifier(cascade_path)
-    if face_cascade.empty():
-        print("[Moodio] WARNING: Haar cascade failed to load!")
+    # Load face cascades (Frontal Alt2 + Profile)
+    _CASCADE_DIR = cv2.data.haarcascades
+    face_cascade_frontal = cv2.CascadeClassifier(_CASCADE_DIR + "haarcascade_frontalface_alt2.xml")
+    face_cascade_profile = cv2.CascadeClassifier(_CASCADE_DIR + "haarcascade_profileface.xml")
+    
+    if face_cascade_frontal.empty():
+        print("[Moodio] WARNING: Frontal cascade failed to load!")
     else:
-        print(f"[Moodio] Haar cascade loaded: {cascade_path}")
+        print(f"[Moodio] Cascades loaded from {_CASCADE_DIR}")
 
     # Load model metadata & weights
     try:
@@ -71,22 +74,118 @@ async def startup_event():
 
 # ── Face detection & crop helpers ─────────────────────────────────────────────
 
-def detect_faces(pil_image: Image.Image):
+def compute_iou(boxA, boxB):
     """
-    Detect all faces using OpenCV Haar cascade.
-    Returns list of (x, y, w, h) in original image pixel coordinates.
+    Compute Intersection over Union (IoU) of two boxes [x, y, w, h].
+    """
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[0] + boxA[2], boxB[0] + boxB[2])
+    yB = min(boxA[1] + boxA[3], boxB[1] + boxB[3])
+
+    interWidth = max(0, xB - xA)
+    interHeight = max(0, yB - yA)
+    interArea = interWidth * interHeight
+
+    areaA = boxA[2] * boxA[3]
+    areaB = boxB[2] * boxB[3]
+
+    if areaA + areaB - interArea == 0:
+        return 0
+    
+    return interArea / float(areaA + areaB - interArea)
+
+
+def non_max_suppression(boxes, iou_threshold=0.35):
+    """
+    Simple NMS to remove overlapping duplicate boxes.
+    Sorts by area descending.
+    """
+    if not boxes:
+        return []
+
+    # Sort by area descending
+    boxes = sorted(boxes, key=lambda b: b[2] * b[3], reverse=True)
+    keep = []
+    
+    while boxes:
+        current = boxes.pop(0)
+        keep.append(current)
+        boxes = [b for b in boxes if compute_iou(current, b) < iou_threshold]
+    
+    return keep
+
+
+def detect_faces(pil_image: Image.Image, source="image"):
+    """
+    Enhanced detection using multiple cascades (frontal + profile) with NMS.
     """
     img_rgb  = np.array(pil_image.convert("RGB"))
+    img_w, img_h = pil_image.size
     img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
-    faces    = face_cascade.detectMultiScale(
+    
+    # 1. Dynamic minSize (3% of smaller dimension)
+    min_dim = min(img_w, img_h)
+    min_s = max(30, int(min_dim * 0.03))
+
+    # 2. Multi-Cascade Detection (scaleFactor 1.05 for better accuracy)
+    frontal_faces = face_cascade_frontal.detectMultiScale(
         img_gray,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(40, 40),
+        scaleFactor=1.05,
+        minNeighbors=7,
+        minSize=(min_s, min_s),
     )
-    if len(faces) == 0:
-        return []
-    return [(int(x), int(y), int(w), int(h)) for (x, y, w, h) in faces]
+    
+    profile_faces = face_cascade_profile.detectMultiScale(
+        img_gray,
+        scaleFactor=1.05,
+        minNeighbors=7,
+        minSize=(min_s, min_s),
+    )
+
+    raw_boxes = []
+    for (x, y, w, h) in frontal_faces:
+        raw_boxes.append([int(x), int(y), int(w), int(h)])
+    for (x, y, w, h) in profile_faces:
+        raw_boxes.append([int(x), int(y), int(w), int(h)])
+    
+    raw_count = len(raw_boxes)
+    if raw_count == 0:
+        return [], {"raw": 0, "final": 0}
+
+    # 3. Filtering
+    filtered_boxes = []
+    img_area = img_w * img_h
+    for b in raw_boxes:
+        x, y, w, h = b
+        
+        # Aspect Ratio (faces are 0.6 - 1.6)
+        aspect_ratio = w / float(h)
+        if aspect_ratio < 0.6 or aspect_ratio > 1.6:
+            continue
+            
+        # Area Ratio (0.1% min)
+        if (w * h) < (img_area * 0.001):
+            continue
+            
+        # Intersection (60% inside)
+        x1, y1 = max(0, x), max(0, y)
+        x2, y2 = min(img_w, x + w), min(img_h, y + h)
+        if (max(0, x2 - x1) * max(0, y2 - y1)) < (0.6 * w * h):
+            continue
+
+        filtered_boxes.append(b)
+
+    # 4. NMS
+    final_boxes = non_max_suppression(filtered_boxes, iou_threshold=0.3)
+    
+    debug_info = {
+        "raw": raw_count,
+        "after_filter": len(filtered_boxes),
+        "final": len(final_boxes)
+    }
+
+    return final_boxes, debug_info
 
 
 def crop_face(pil_image: Image.Image, x, y, w, h, margin_ratio=0.15):
@@ -136,7 +235,7 @@ async def analyze_image(request: Request, file: UploadFile = File(...)):
 
     if not model:
         raise HTTPException(status_code=503, detail="Model not loaded")
-    if face_cascade is None or face_cascade.empty():
+    if face_cascade_frontal is None or face_cascade_frontal.empty():
         raise HTTPException(status_code=503, detail="Face detector not ready")
 
     start_time = time.perf_counter()
@@ -156,8 +255,10 @@ async def analyze_image(request: Request, file: UploadFile = File(...)):
 
     img_w, img_h = pil_image.size
 
-    # Detect all faces
-    faces_detected = detect_faces(pil_image)
+    # Detect all faces with improved filtering
+    source_context = request.query_params.get("source", "image")
+    faces_detected, debug_info = detect_faces(pil_image, source=source_context)
+    print(f"[Moodio] request_id={request_id} source={source_context} detection={debug_info}")
 
     # Run inference per face
     face_results = []
@@ -189,6 +290,7 @@ async def analyze_image(request: Request, file: UploadFile = File(...)):
         "image_size": {"width": img_w, "height": img_h},
         "faces":      face_results,
         "latency_ms": latency_ms,
+        "debug":      debug_info,
     }
 
     if not face_results:
