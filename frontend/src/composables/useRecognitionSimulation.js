@@ -5,6 +5,7 @@ import {
   EMOTION_COLORS 
 } from '@/constants/emotions'
 import { API_BASE_URL } from '@/constants/api'
+import { normalizeDetectionResult } from '@/utils/faceBox'
 
 export function useRecognitionSimulation() {
   const steps = [
@@ -184,17 +185,29 @@ export function useRecognitionSimulation() {
     try {
       const res = await fetch(`${API_BASE_URL}/analyze-image`, { method: 'POST', body: formData })
       const data = await res.json()
-      if (data && data.faces && data.faces.length > 0) {
-        const primaryEmotion = data.faces[0].emotion
-        const confidence = data.faces[0].confidence // Already in 0-100 from backend
-        
+      const result = normalizeDetectionResult(data)
+
+      if (result.faces && result.faces.length > 0) {
+        const face = result.faces[0]
         const newScores = {}
-        EMOTION_CLASSES.forEach(cls => { newScores[cls] = 2 })
         
-        newScores[primaryEmotion] = Math.round(confidence)
-        const remaining = 100 - confidence
-        const others = EMOTION_CLASSES.filter(k => k !== primaryEmotion)
-        others.forEach(k => { newScores[k] = Math.max(0, Math.floor(remaining / others.length)) })
+        // If the backend provided a full probability distribution, use it!
+        if (face.all_probs && Object.keys(face.all_probs).length > 0) {
+          EMOTION_CLASSES.forEach(cls => {
+            newScores[cls] = Math.round((face.all_probs[cls] || 0) * 100)
+          })
+        } else {
+          // Fallback: Generate a distribution from primary emotion + confidence
+          // face.confidence is 0-1 from normalizeDetectionResult
+          const confidencePct = Math.round(face.confidence * 100)
+          newScores[face.emotion] = confidencePct
+          
+          const remaining = 100 - confidencePct
+          const others = EMOTION_CLASSES.filter(k => k !== face.emotion)
+          others.forEach(k => { 
+            newScores[k] = Math.max(0, Math.floor(remaining / (others.length || 1))) 
+          })
+        }
         
         customScores.value = newScores
       }
