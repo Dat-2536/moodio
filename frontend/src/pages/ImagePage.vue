@@ -10,24 +10,26 @@ import FaceResultList from '@/components/vision/FaceResultList.vue'
 import { useImageAnalysis } from '@/composables/useImageAnalysis'
 import { useDragDrop } from '@/composables/useDragDrop'
 
-const { 
-  analysisResults, 
-  uploadedImage, 
-  isAnalyzing, 
+const {
+  analysisResults,
+  uploadedImage,
+  isAnalyzing,
+  hasPerformedAnalysis,
   imageSize,
-  processImageFile, 
-  resetImage 
+  errorMessage,
+  processImageFile,
+  resetImage,
 } = useImageAnalysis()
 
-const { 
-  isDragging, 
-  handleDragEnter, 
-  handleDragLeave, 
-  handleDrop 
+const {
+  isDragging,
+  handleDragEnter,
+  handleDragLeave,
+  handleDrop,
 } = useDragDrop(processImageFile)
 
 const handlePaste = (e) => {
-  const items = e.clipboardData.items
+  const items = e.clipboardData?.items ?? []
   for (let i = 0; i < items.length; i++) {
     if (items[i].type.indexOf('image') !== -1) {
       const file = items[i].getAsFile()
@@ -48,13 +50,14 @@ onUnmounted(() => {
 
 <template>
   <section class="service-page">
-    <PageHeader 
-      title="Moodio Image Analysis" 
+    <PageHeader
+      title="Moodio Image Analysis"
       subtitle="Tải ảnh lên hoặc Ctrl+V để phân tích biểu cảm với ResNet-18."
     />
 
+    <!-- ── Upload zone (no image yet) ──────────────────────────────────────── -->
     <div v-if="!uploadedImage" class="container">
-      <UploadBox 
+      <UploadBox
         title="Kéo thả hoặc dán (Ctrl+V) ảnh"
         subtitle="Hỗ trợ JPG, PNG, WEBP (Tối đa 5MB)"
         accept="image/*"
@@ -68,12 +71,17 @@ onUnmounted(() => {
       />
     </div>
 
+    <!-- ── Analysis grid (image uploaded) ──────────────────────────────────── -->
     <div v-else class="container">
-      <div class="vision-grid relative-container"
-           :class="{ dragging: isDragging }"
-           @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave"
-           @drop="handleDrop">
-        
+      <div
+        class="vision-grid relative-container"
+        :class="{ dragging: isDragging }"
+        @dragover.prevent
+        @dragenter="handleDragEnter"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop"
+      >
+        <!-- Drag-over overlay -->
         <div v-if="isDragging" class="drop-overlay">
           <div class="drop-overlay-content">
             <Upload :size="48" />
@@ -81,13 +89,15 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- ── Left: image + bounding boxes ─────────────────────────────── -->
         <div class="vision-main">
           <VisionFrame :is-analyzing="isAnalyzing">
-            <div class="media-frame">
-              <img :src="uploadedImage" class="analyzed-img">
-              
-              <FaceOverlay 
-                v-if="analysisResults.length > 0"
+            <!-- hud-inner-frame: fills hud-container; overlay measured against this -->
+            <div class="hud-inner-frame">
+              <img :src="uploadedImage" class="analyzed-img" alt="Uploaded image" />
+
+              <FaceOverlay
+                v-if="analysisResults.length > 0 || hasPerformedAnalysis"
                 :faces="analysisResults"
                 :media-size="imageSize"
               />
@@ -95,21 +105,28 @@ onUnmounted(() => {
           </VisionFrame>
         </div>
 
+        <!-- ── Right: result sidebar ─────────────────────────────────────── -->
         <div class="vision-sidebar card glass p-6">
           <div class="sidebar-header border-b border-white/10 pb-4 mb-6">
-             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-black uppercase tracking-tighter">Analysis Results</h3>
-                <div class="flex gap-2">
-                  <span v-if="analysisResults.length > 0" class="px-2 py-1 bg-primary/20 text-primary rounded text-[10px] font-bold">
-                    {{ analysisResults.length }} DETECTED
-                  </span>
-                </div>
-             </div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-black uppercase tracking-tighter">Analysis Results</h3>
+              <div class="flex gap-2">
+                <span
+                  v-if="analysisResults.length > 0"
+                  class="px-2 py-1 bg-primary/20 text-primary rounded text-[10px] font-bold"
+                >
+                  {{ analysisResults.length }} DETECTED
+                </span>
+              </div>
+            </div>
           </div>
 
-          <FaceResultList 
+          <FaceResultList
             :faces="analysisResults"
             :is-analyzing="isAnalyzing"
+            :has-performed-analysis="hasPerformedAnalysis"
+            :error-message="errorMessage"
+            source="image"
           />
 
           <div class="mt-8 flex flex-col gap-3">
@@ -118,12 +135,22 @@ onUnmounted(() => {
             </AppButton>
           </div>
         </div>
+
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
+/* hud-inner-frame fills the .hud-container completely */
+.hud-inner-frame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .relative-container {
   position: relative;
 }
@@ -157,5 +184,25 @@ onUnmounted(() => {
   font-size: 1.2rem;
 }
 
-.mt-8 { margin-top: 2rem; }
+/* Utility classes */
+.flex            { display: flex; }
+.flex-col        { flex-direction: column; }
+.gap-2           { gap: 0.5rem; }
+.gap-3           { gap: 0.75rem; }
+.items-center    { align-items: center; }
+.justify-between { justify-content: space-between; }
+.mt-8            { margin-top: 2rem; }
+.mb-6            { margin-bottom: 1.5rem; }
+.pb-4            { padding-bottom: 1rem; }
+.p-6             { padding: 1.5rem; }
+.text-lg         { font-size: 1.125rem; }
+.text-[10px]     { font-size: 10px; }
+.font-black      { font-weight: 900; }
+.font-bold       { font-weight: 700; }
+.uppercase       { text-transform: uppercase; }
+.tracking-tighter{ letter-spacing: -0.05em; }
+.text-primary    { color: var(--primary); }
+.rounded         { border-radius: 6px; }
+.px-2            { padding-left: 0.5rem; padding-right: 0.5rem; }
+.py-1            { padding-top: 0.25rem; padding-bottom: 0.25rem; }
 </style>

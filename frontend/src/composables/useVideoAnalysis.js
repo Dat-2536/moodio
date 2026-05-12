@@ -1,5 +1,5 @@
 import { ref, onUnmounted } from 'vue'
-import { normalizeFaceResults } from '@/utils/faceUtils'
+import { normalizeDetectionResult } from '@/utils/faceBox'
 import { API_BASE_URL } from '@/constants/api'
 
 export function useVideoAnalysis() {
@@ -8,11 +8,14 @@ export function useVideoAnalysis() {
   const currentEmotion = ref(null)
   const analysisInterval = ref(null)
 
+  const hasPerformedAnalysis = ref(false)
+
   const handleVideoUpload = (file) => {
     if (file) {
       if (videoUrl.value) URL.revokeObjectURL(videoUrl.value)
       videoUrl.value = URL.createObjectURL(file)
       currentEmotion.value = null
+      hasPerformedAnalysis.value = false
     }
   }
 
@@ -43,7 +46,9 @@ export function useVideoAnalysis() {
             body: formData
           })
           const data = await response.json()
-          currentEmotion.value = data
+          const result = normalizeDetectionResult(data)
+          currentEmotion.value = result.faces
+          hasPerformedAnalysis.value = true
         } catch (err) {
           console.error('Video frame analysis error:', err)
         }
@@ -64,6 +69,7 @@ export function useVideoAnalysis() {
     if (videoUrl.value) URL.revokeObjectURL(videoUrl.value)
     videoUrl.value = ''
     currentEmotion.value = null
+    hasPerformedAnalysis.value = false
   }
 
   onUnmounted(() => {
@@ -73,6 +79,7 @@ export function useVideoAnalysis() {
   return {
     videoUrl,
     isAnalyzing,
+    hasPerformedAnalysis,
     currentEmotion,
     handleVideoUpload,
     startVideoAnalysis,

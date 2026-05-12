@@ -1,76 +1,106 @@
 import { ref, onUnmounted } from 'vue'
-import { normalizeFaceResults } from '@/utils/faceUtils'
+import { normalizeDetectionResult } from '@/utils/faceBox'
 import { API_BASE_URL } from '@/constants/api'
 import { saveLocalLog } from '@/utils/localStats'
 
+/**
+ * Loads an image from an object URL and resolves with { width, height }.
+ * Rejects on error. This avoids a race between onload and the fetch response.
+ */
+function loadImageDimensions(objectUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    img.onload  = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    img.onerror = reject
+    img.src = objectUrl
+  })
+}
+
 export function useImageAnalysis() {
-  const analysisResults = ref([])
-  const uploadedImage = ref(null)
-  const isAnalyzing = ref(false)
-  const imageSize = ref({ width: 0, height: 0 })
+  const analysisResults      = ref([])
+  const uploadedImage        = ref(null)   // object URL
+  const isAnalyzing          = ref(false)
+  const hasPerformedAnalysis = ref(false)
+  const imageSize            = ref({ width: 0, height: 0 })
+  const errorMessage         = ref(null)
 
   const processImageFile = async (file) => {
     if (!file) return
-    
-    // Revoke old URL if exists
+
+    // Revoke the previous object URL to free memory
     if (uploadedImage.value) {
       URL.revokeObjectURL(uploadedImage.value)
     }
-    
-    uploadedImage.value = URL.createObjectURL(file)
-    isAnalyzing.value = true
-    analysisResults.value = []
 
-    // Get natural dimensions
-    const img = new Image()
-    img.onload = () => {
-      imageSize.value = { width: img.naturalWidth, height: img.naturalHeight }
-    }
-    img.src = uploadedImage.value
+    const objectUrl = URL.createObjectURL(file)
+    uploadedImage.value        = objectUrl
+    isAnalyzing.value          = true
+    analysisResults.value      = []
+    hasPerformedAnalysis.value = false
+    errorMessage.value         = null
+    imageSize.value            = { width: 0, height: 0 }
 
-    const requestId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
+    const startTime = performance.now()
+    const requestId = crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
+
+    // Load image dimensions and run inference in parallel — both use the same blob/URL.
     const formData = new FormData()
     formData.append('file', file)
-    
-    const startTime = performance.now()
+
     try {
-      const res = await fetch(`${API_BASE_URL}/analyze-image`, { 
-        method: 'POST', 
-        body: formData,
-        headers: {
-          'X-Request-ID': requestId
-        }
-      })
+      // Run both in parallel; we need dimensions before rendering boxes
+      const [dimensions, res] = await Promise.all([
+        loadImageDimensions(objectUrl),
+        fetch(`${API_BASE_URL}/analyze-image`, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Request-ID': requestId },
+        }),
+      ])
+
+      // Store natural dimensions (needed for bounding box scaling)
+      imageSize.value = dimensions
 
       if (!res.ok) {
         const text = await res.text()
         console.error('[Moodio] image analyze failed', {
           requestId,
-          url: `${API_BASE_URL}/analyze-image`,
           status: res.status,
           statusText: res.statusText,
-          body: text.slice(0, 500)
+          body: text.slice(0, 300),
         })
-        throw new Error(`Analyze API failed: ${res.status} ${res.statusText} requestId=${requestId}`)
+        errorMessage.value = `API error ${res.status}: ${res.statusText}`
+        return
       }
 
       const data = await res.json()
-      
-      const results = normalizeFaceResults(data)
-      analysisResults.value = results
-      
+      const result = normalizeDetectionResult(data)
+
+      // If backend returned image_size, prefer it (it measured the actual decoded image)
+      if (result.image_size?.width && result.image_size?.height) {
+        imageSize.value = { width: result.image_size.width, height: result.image_size.height }
+      }
+
+      analysisResults.value      = result.faces
+      hasPerformedAnalysis.value = true
+
       // Log to local stats
-      if (results.length > 0) {
+      if (result.faces.length > 0) {
         saveLocalLog({
           source: 'image',
-          detectedFaces: results.length,
-          topEmotion: results[0].emotion,
-          confidence: results[0].confidence,
-          latencyMs: performance.now() - startTime
+          detectedFaces: result.faces.length,
+          topEmotion: result.faces[0].emotion,
+          confidence: result.faces[0].confidence,
+          latencyMs: performance.now() - startTime,
         })
       }
-    } catch (err) { 
-      console.error(`[Moodio] Image analysis error [${requestId}]:`, err) 
+    } catch (err) {
+      console.error(`[Moodio] Image analysis error [${requestId}]:`, err)
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        errorMessage.value = 'Network error – cannot reach backend.'
+      } else {
+        errorMessage.value = 'Unexpected error during analysis.'
+      }
     } finally {
       isAnalyzing.value = false
     }
@@ -80,9 +110,11 @@ export function useImageAnalysis() {
     if (uploadedImage.value) {
       URL.revokeObjectURL(uploadedImage.value)
     }
-    uploadedImage.value = null
-    analysisResults.value = []
-    imageSize.value = { width: 0, height: 0 }
+    uploadedImage.value        = null
+    analysisResults.value      = []
+    hasPerformedAnalysis.value = false
+    imageSize.value            = { width: 0, height: 0 }
+    errorMessage.value         = null
   }
 
   onUnmounted(() => {
@@ -95,8 +127,10 @@ export function useImageAnalysis() {
     analysisResults,
     uploadedImage,
     isAnalyzing,
+    hasPerformedAnalysis,
     imageSize,
+    errorMessage,
     processImageFile,
-    resetImage
+    resetImage,
   }
 }

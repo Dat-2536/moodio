@@ -34,11 +34,21 @@ defineProps({
   color: #fff;
 }
 
-:deep(.webcam-video), :deep(.main-video), :deep(.analyzed-img) {
+/*
+  Use object-fit: contain so the media never crops and bounding box scaling
+  via computeObjectFitContainRect() always matches what's displayed.
+  Letter-box/pillarbox areas will be black (matching .hud-container background).
+*/
+:deep(.webcam-video),
+:deep(.main-video),
+:deep(.analyzed-img),
+:deep(video),
+:deep(img.analyzed-img) {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 12px;
+  display: block;
 }
 
 .scanner-bar {
@@ -51,11 +61,11 @@ defineProps({
   box-shadow: 0 0 15px var(--primary);
   animation: scan 4s infinite linear;
   z-index: 5;
+  pointer-events: none;
 }
 
 @keyframes scan {
-  0% { top: 0; }
+  0%   { top: 0; }
   100% { top: 100%; }
 }
-
 </style>
