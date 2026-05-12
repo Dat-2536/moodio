@@ -41,8 +41,13 @@ def predict(model, img_input):
 
     with torch.no_grad():
         output = model(tensor)
-        probs  = torch.softmax(output, dim=1)[0]
-        pred   = probs.argmax().item()
+        
+        # Apply Softmax with Temperature (T=0.8) to sharpen probabilities
+        # This makes the top emotion more prominent/definitive for the user
+        temperature = 0.8
+        probs = torch.softmax(output / temperature, dim=1)[0]
+        
+        pred = probs.argmax().item()
 
     return {
         'emotion': emotions[pred],

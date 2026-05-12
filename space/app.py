@@ -118,71 +118,70 @@ def non_max_suppression(boxes, iou_threshold=0.35):
 
 def detect_faces(pil_image: Image.Image, source="image"):
     """
-    Enhanced detection using multiple cascades (frontal + profile) with NMS.
+    Optimized multi-cascade detection with pre-resizing for speed on HF Space.
     """
-    img_rgb  = np.array(pil_image.convert("RGB"))
-    img_w, img_h = pil_image.size
+    orig_w, orig_h = pil_image.size
+    
+    # 1. Resize for detection speed (max dimension 720px for HF Space)
+    # CPU usage on free-tier is limited, so smaller is better.
+    det_max_dim = 720
+    if max(orig_w, orig_h) > det_max_dim:
+        scale = det_max_dim / float(max(orig_w, orig_h))
+        det_w, det_h = int(orig_w * scale), int(orig_h * scale)
+        det_image = pil_image.resize((det_w, det_h), Image.BILINEAR)
+    else:
+        scale = 1.0
+        det_w, det_h = orig_w, orig_h
+        det_image = pil_image
+
+    img_rgb  = np.array(det_image.convert("RGB"))
     img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
     
-    # 1. Dynamic minSize (3% of smaller dimension)
-    min_dim = min(img_w, img_h)
-    min_s = max(30, int(min_dim * 0.03))
+    # 2. Dynamic minSize (relative to detection image)
+    min_dim = min(det_w, det_h)
+    min_s = max(25, int(min_dim * 0.05))
 
-    # 2. Multi-Cascade Detection (scaleFactor 1.05 for better accuracy)
+    # 3. Multi-Cascade Detection (scaleFactor 1.1 for speed)
     frontal_faces = face_cascade_frontal.detectMultiScale(
         img_gray,
-        scaleFactor=1.05,
-        minNeighbors=7,
+        scaleFactor=1.1,
+        minNeighbors=6,
         minSize=(min_s, min_s),
     )
     
     profile_faces = face_cascade_profile.detectMultiScale(
         img_gray,
-        scaleFactor=1.05,
-        minNeighbors=7,
+        scaleFactor=1.1,
+        minNeighbors=6,
         minSize=(min_s, min_s),
     )
 
+    # Combine and scale back to original coordinates
     raw_boxes = []
+    inv_scale = 1.0 / scale
     for (x, y, w, h) in frontal_faces:
-        raw_boxes.append([int(x), int(y), int(w), int(h)])
+        raw_boxes.append([int(x * inv_scale), int(y * inv_scale), int(w * inv_scale), int(h * inv_scale)])
     for (x, y, w, h) in profile_faces:
-        raw_boxes.append([int(x), int(y), int(w), int(h)])
+        raw_boxes.append([int(x * inv_scale), int(y * inv_scale), int(w * inv_scale), int(h * inv_scale)])
     
-    raw_count = len(raw_boxes)
-    if raw_count == 0:
+    if not raw_boxes:
         return [], {"raw": 0, "final": 0}
 
-    # 3. Filtering
+    # 4. Filtering
     filtered_boxes = []
-    img_area = img_w * img_h
     for b in raw_boxes:
         x, y, w, h = b
-        
-        # Aspect Ratio (faces are 0.6 - 1.6)
         aspect_ratio = w / float(h)
-        if aspect_ratio < 0.6 or aspect_ratio > 1.6:
-            continue
-            
-        # Area Ratio (0.1% min)
-        if (w * h) < (img_area * 0.001):
-            continue
-            
-        # Intersection (60% inside)
-        x1, y1 = max(0, x), max(0, y)
-        x2, y2 = min(img_w, x + w), min(img_h, y + h)
-        if (max(0, x2 - x1) * max(0, y2 - y1)) < (0.6 * w * h):
-            continue
+        if 0.6 < aspect_ratio < 1.6:
+            filtered_boxes.append(b)
 
-        filtered_boxes.append(b)
-
-    # 4. NMS
+    # 5. NMS
     final_boxes = non_max_suppression(filtered_boxes, iou_threshold=0.3)
     
     debug_info = {
-        "raw": raw_count,
-        "after_filter": len(filtered_boxes),
-        "final": len(final_boxes)
+        "raw": len(raw_boxes),
+        "final": len(final_boxes),
+        "det_res": f"{det_w}x{det_h}"
     }
 
     return final_boxes, debug_info

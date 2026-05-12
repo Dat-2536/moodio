@@ -51,7 +51,7 @@ export function useImageAnalysis() {
       // Run both in parallel; we need dimensions before rendering boxes
       const [dimensions, res] = await Promise.all([
         loadImageDimensions(objectUrl),
-        fetch(`${API_BASE_URL}/analyze-image`, {
+        fetch(`${API_BASE_URL}/analyze-image?source=image`, {
           method: 'POST',
           body: formData,
           headers: { 'X-Request-ID': requestId },

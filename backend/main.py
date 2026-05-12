@@ -83,81 +83,71 @@ def non_max_suppression(boxes, iou_threshold=0.35):
 
 def detect_faces_cv2(pil_image, source="image"):
     """
-    Enhanced detection using multiple cascades (frontal + profile) with NMS.
+    Optimized multi-cascade detection with pre-resizing for speed.
     """
-    img_rgb = np.array(pil_image.convert('RGB'))
-    img_w, img_h = pil_image.size
+    orig_w, orig_h = pil_image.size
+    
+    # 1. Resize for detection speed (max dimension 800px)
+    # This is the single biggest optimization for high-res images.
+    det_max_dim = 800
+    if max(orig_w, orig_h) > det_max_dim:
+        scale = det_max_dim / float(max(orig_w, orig_h))
+        det_w, det_h = int(orig_w * scale), int(orig_h * scale)
+        det_image = pil_image.resize((det_w, det_h), Image.BILINEAR)
+    else:
+        scale = 1.0
+        det_w, det_h = orig_w, orig_h
+        det_image = pil_image
+
+    img_rgb = np.array(det_image.convert('RGB'))
     img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
     
-    # 1. Dynamic minSize
-    min_dim = min(img_w, img_h)
-    # Using slightly smaller minSize (3%) but higher minNeighbors (7) for better precision/recall
-    min_s = max(30, int(min_dim * 0.03))
+    # 2. Dynamic minSize (relative to detection image)
+    min_dim = min(det_w, det_h)
+    min_s = max(25, int(min_dim * 0.05))
 
-    # 2. Multi-Cascade Detection
-    # Frontal (Alt2 is more accurate than default)
-    # scaleFactor=1.05 gives finer search resolution to find missed faces
+    # 3. Detection (Using scaleFactor 1.1 for speed, was 1.05)
+    # Alt2 + Profile catch most cases efficiently
     frontal_faces = face_cascade_frontal.detectMultiScale(
         img_gray,
-        scaleFactor=1.05,
-        minNeighbors=7,
+        scaleFactor=1.1,
+        minNeighbors=6,
         minSize=(min_s, min_s)
     )
     
-    # Profile (Side faces)
     profile_faces = face_cascade_profile.detectMultiScale(
         img_gray,
-        scaleFactor=1.05,
-        minNeighbors=7,
+        scaleFactor=1.1,
+        minNeighbors=6,
         minSize=(min_s, min_s)
     )
 
-    # Combine detections
+    # Combine and scale back to original coordinates
     raw_boxes = []
+    inv_scale = 1.0 / scale
     for (x, y, w, h) in frontal_faces:
-        raw_boxes.append([int(x), int(y), int(w), int(h)])
+        raw_boxes.append([int(x * inv_scale), int(y * inv_scale), int(w * inv_scale), int(h * inv_scale)])
     for (x, y, w, h) in profile_faces:
-        raw_boxes.append([int(x), int(y), int(w), int(h)])
+        raw_boxes.append([int(x * inv_scale), int(y * inv_scale), int(w * inv_scale), int(h * inv_scale)])
     
-    raw_count = len(raw_boxes)
-    if raw_count == 0:
-        return [], {"raw": 0, "after_filter": 0, "final": 0}
+    if not raw_boxes:
+        return [], {"raw": 0, "final": 0}
 
-    # 3. Quality Filtering
+    # 4. Quality Filtering (Simple but effective)
     filtered_boxes = []
-    img_area = img_w * img_h
-    
     for b in raw_boxes:
         x, y, w, h = b
-        
-        # Aspect Ratio Check (faces are [0.6, 1.6])
         aspect_ratio = w / float(h)
-        if aspect_ratio < 0.6 or aspect_ratio > 1.6:
-            continue
-            
-        # Area Ratio Check (Reject very tiny noise)
-        if (w * h) < (img_area * 0.001):
-            continue
+        if 0.6 < aspect_ratio < 1.6:
+            filtered_boxes.append(b)
 
-        # Boundary intersection check (at least 60% must be inside)
-        x1, y1 = max(0, x), max(0, y)
-        x2, y2 = min(img_w, x + w), min(img_h, y + h)
-        inter_area = max(0, x2 - x1) * max(0, y2 - y1)
-        if inter_area < (0.6 * w * h):
-            continue
-            
-        filtered_boxes.append(b)
-
-    filter_count = len(filtered_boxes)
-
-    # 4. NMS (Merge overlaps from frontal vs profile detections)
+    # 5. NMS
     final_boxes = non_max_suppression(filtered_boxes, iou_threshold=0.3)
-    final_count = len(final_boxes)
 
     debug_info = {
-        "raw": raw_count,
-        "after_filter": filter_count,
-        "final": final_count
+        "raw": len(raw_boxes),
+        "final": len(final_boxes),
+        "det_res": f"{det_w}x{det_h}"
     }
 
     return final_boxes, debug_info

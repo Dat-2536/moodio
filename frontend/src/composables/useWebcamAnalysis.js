@@ -55,11 +55,21 @@ export function useWebcamAnalysis() {
     const startTime = performance.now()
 
     try {
-      // Draw current video frame onto offscreen canvas
-      canvas.width  = video.videoWidth
-      canvas.height = video.videoHeight
+      // 1. Resize for transmission speed (max dimension 640px)
+      // This reduces payload size and backend processing time significantly.
+      const maxDim = 640
+      let w = video.videoWidth
+      let h = video.videoHeight
+      if (w > maxDim || h > maxDim) {
+        const scale = maxDim / Math.max(w, h)
+        w = Math.round(w * scale)
+        h = Math.round(h * scale)
+      }
+
+      canvas.width  = w
+      canvas.height = h
       const ctx = canvas.getContext('2d')
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      ctx.drawImage(video, 0, 0, w, h)
 
       // Encode to JPEG blob
       const blob = await new Promise(resolve =>
@@ -70,7 +80,7 @@ export function useWebcamAnalysis() {
       const formData = new FormData()
       formData.append('file', blob, 'webcam.jpg')
 
-      const res = await fetch(`${API_BASE_URL}/analyze-image`, {
+      const res = await fetch(`${API_BASE_URL}/analyze-image?source=webcam`, {
         method: 'POST',
         body: formData,
       })
